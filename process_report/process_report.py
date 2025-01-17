@@ -20,6 +20,7 @@ from process_report.invoices import (
     MOCA_prepaid_invoice,
     prepay_credits_snapshot,
     ocp_test_invoice,
+    MOCA_group_specific_invoice,
 )
 from process_report.processors import (
     coldfront_fetch_processor,
@@ -183,6 +184,12 @@ def main():
         required=False,
         default="pi_invoices",
         help="Name of output folder containing pi-specific invoice csvs",
+    )
+    parser.add_argument(
+        "--prepay-groups-output-folder",
+        required=False,
+        default="group_invoices",
+        help="Name of output folder containing prepay-group-specific invoice PDFs",
     )
     parser.add_argument(
         "--BU-invoice-file",
@@ -391,6 +398,13 @@ def main():
         prepay_contacts=prepay_info,
     )
 
+    moca_group_inv = MOCA_group_specific_invoice.MOCAGroupInvoice(
+        name=args.prepay_groups_output_folder,
+        invoice_month=invoice_month,
+        data=processed_data,
+        prepay_credits=prepay_credits,
+    )
+
     ocp_test_inv = ocp_test_invoice.OcpTestInvoice(
         name="", invoice_month=invoice_month, data=processed_data.copy()
     )
@@ -406,6 +420,7 @@ def main():
             moca_prepaid_inv,
             prepay_credits_snap,
             ocp_test_inv,
+            moca_group_inv,
         ],
         args.upload_to_s3,
     )
