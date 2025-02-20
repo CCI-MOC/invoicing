@@ -174,4 +174,5 @@ def new_prepayment_processor(
         prepay_contacts,
         prepay_debits_filepath,
         upload_to_s3,
+        False,
     )
