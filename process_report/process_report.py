@@ -9,6 +9,7 @@ from nerc_rates import load_from_url
 
 from process_report import util
 from process_report.invoices import (
+    bm_invoice,
     lenovo_invoice,
     nonbillable_invoice,
     billable_invoice,
@@ -191,6 +192,12 @@ def main():
         help="Name of output csv for Lenovo SU Types invoice",
     )
     parser.add_argument(
+        "--bm-usage-file",
+        required=False,
+        default="bm_usage",
+        help="Name of output csv for Lenovo SU Types invoice",
+    )
+    parser.add_argument(
         "--old-pi-file",
         required=False,
         help="Name of csv file listing previously billed PIs. If not provided, defaults to fetching from S3",
@@ -366,6 +373,10 @@ def main():
         name="", invoice_month=invoice_month, data=processed_data.copy()
     )
 
+    bm_inv = bm_invoice.BMInvoice(
+        name=args.bm_usage_file, invoice_month=invoice_month, data=processed_data
+    )
+
     util.process_and_export_invoices(
         [
             lenovo_inv,
@@ -375,6 +386,7 @@ def main():
             bu_internal_inv,
             pi_inv,
             moca_prepaid_inv,
+            bm_inv,
         ],
         args.upload_to_s3,
     )
