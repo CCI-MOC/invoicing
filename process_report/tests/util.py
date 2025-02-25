@@ -212,7 +212,7 @@ def new_bm_usage_processor(
     if data is None:
         data = pandas.DataFrame()
     return bm_usage_processor.BMUsageProcessor(
-        name,
         invoice_month,
         data,
+        name,
     )

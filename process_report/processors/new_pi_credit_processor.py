@@ -102,7 +102,7 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         return data[~data["Missing PI"]]
 
     def _filter_bm_projects(self, data):
-        return data[~(data[invoice.PROJECT_ID_FIELD] == "ESI Bare Metal")]
+        return data[~(data[invoice.CLUSTER_NAME_FIELD] == "bm")]
 
     def _get_credit_eligible_projects(self, data: pandas.DataFrame):
         filtered_data = self._filter_nonbillables(data)

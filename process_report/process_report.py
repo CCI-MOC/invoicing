@@ -10,6 +10,7 @@ from process_report.loader import loader
 from process_report import util
 from process_report.invoices import (
     invoice,
+    bm_invoice,
     lenovo_invoice,
     nonbillable_invoice,
     billable_invoice,
@@ -96,6 +97,7 @@ def main():
             MOCA_prepaid_invoice.MOCAPrepaidInvoice,
             prepay_credits_snapshot.PrepayCreditsSnapshot,
             ocp_test_invoice.OcpTestInvoice,
+            bm_invoice.BMInvoice,
         ],
         invoice_settings.upload_to_s3,
     )

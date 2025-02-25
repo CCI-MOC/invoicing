@@ -34,11 +34,9 @@ class BUSubsidyProcessor(discount_processor.DiscountProcessor):
         filtered_data = filtered_data[
             filtered_data[invoice.INSTITUTION_FIELD] == "Boston University"
         ]
-        filtered_data = (
-            filtered_data[  # TODO Does it make sense to test this filter in test cases?
-                ~(filtered_data[invoice.PROJECT_ID_FIELD] == "ESI Bare Metal")
-            ]
-        )
+        filtered_data = filtered_data[
+            ~(filtered_data[invoice.CLUSTER_NAME_FIELD] == "bm")
+        ]
 
         return filtered_data
 
