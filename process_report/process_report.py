@@ -284,6 +284,8 @@ def main():
     )
     bm_usage_proc.process()
 
+    ### Credits and discounts processing
+
     new_pi_credit_proc = new_pi_credit_processor.NewPICreditProcessor(
         "",
         invoice_month,
