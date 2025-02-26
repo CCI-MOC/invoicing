@@ -14,6 +14,7 @@ from process_report.processors import (
     new_pi_credit_processor,
     bu_subsidy_processor,
     prepayment_processor,
+    bm_usage_processor,
 )
 
 
@@ -174,4 +175,18 @@ def new_prepayment_processor(
         prepay_contacts,
         prepay_debits_filepath,
         upload_to_s3,
+    )
+
+
+def new_bm_usage_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return bm_usage_processor.BMUsageProcessor(
+        name,
+        invoice_month,
+        data,
     )

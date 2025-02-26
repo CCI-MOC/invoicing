@@ -25,6 +25,7 @@ from process_report.processors import (
     new_pi_credit_processor,
     bu_subsidy_processor,
     prepayment_processor,
+    bm_usage_processor,
 )
 
 ### PI file field names
@@ -278,10 +279,15 @@ def main():
     )
     validate_billable_pi_proc.process()
 
+    bm_usage_proc = bm_usage_processor.BMUsageProcessor(
+        "", invoice_month, validate_billable_pi_proc.data
+    )
+    bm_usage_proc.process()
+
     new_pi_credit_proc = new_pi_credit_processor.NewPICreditProcessor(
         "",
         invoice_month,
-        data=validate_billable_pi_proc.data,
+        data=bm_usage_proc.data,
         old_pi_filepath=old_pi_file,
         initial_credit_amount=new_pi_credit_amount,
         limit_new_pi_credit_to_partners=(
