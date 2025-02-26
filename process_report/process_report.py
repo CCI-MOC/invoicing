@@ -31,6 +31,7 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
     validate_cluster_name_processor,
+    bm_usage_processor,
 )
 
 
@@ -72,6 +73,7 @@ def main():
             validate_cluster_name_processor.ValidateClusterNameProcessor,
             coldfront_fetch_processor.ColdfrontFetchProcessor,
             validate_pi_alias_processor.ValidatePIAliasProcessor,
+            bm_usage_processor.BMUsageProcessor,
             add_institution_processor.AddInstitutionProcessor,
             lenovo_processor.LenovoProcessor,
             validate_billable_pi_processor.ValidateBillablePIsProcessor,
