@@ -87,10 +87,14 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     def _filter_missing_pis(self, data):
         return data[~data["Missing PI"]]
 
+    def _filter_bm_projects(self, data):
+        return data[~(data[invoice.PROJECT_ID_FIELD] == "ESI Bare Metal")]
+
     def _get_credit_eligible_projects(self, data: pandas.DataFrame):
         filtered_data = self._filter_nonbillables(data)
         filtered_data = self._filter_missing_pis(filtered_data)
         filtered_data = self._filter_excluded_su_types(filtered_data)
+        filtered_data = self._filter_bm_projects(filtered_data)
         if self.limit_new_pi_credit_to_partners:
             filtered_data = self._filter_partners(filtered_data)
 

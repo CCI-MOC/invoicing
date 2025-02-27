@@ -9,6 +9,7 @@ from nerc_rates import load_from_url
 
 from process_report import util
 from process_report.invoices import (
+    bm_invoice,
     lenovo_invoice,
     nonbillable_invoice,
     billable_invoice,
@@ -25,6 +26,7 @@ from process_report.processors import (
     new_pi_credit_processor,
     bu_subsidy_processor,
     prepayment_processor,
+    bm_usage_processor,
 )
 
 ### PI file field names
@@ -190,6 +192,12 @@ def main():
         help="Name of output csv for Lenovo SU Types invoice",
     )
     parser.add_argument(
+        "--bm-usage-file",
+        required=False,
+        default="bm_usage",
+        help="Name of output csv for Lenovo SU Types invoice",
+    )
+    parser.add_argument(
         "--old-pi-file",
         required=False,
         help="Name of csv file listing previously billed PIs. If not provided, defaults to fetching from S3",
@@ -278,10 +286,17 @@ def main():
     )
     validate_billable_pi_proc.process()
 
+    bm_usage_proc = bm_usage_processor.BMUsageProcessor(
+        "", invoice_month, validate_billable_pi_proc.data
+    )
+    bm_usage_proc.process()
+
+    ### Credits and discounts processing
+
     new_pi_credit_proc = new_pi_credit_processor.NewPICreditProcessor(
         "",
         invoice_month,
-        data=validate_billable_pi_proc.data,
+        data=bm_usage_proc.data,
         old_pi_filepath=old_pi_file,
         initial_credit_amount=new_pi_credit_amount,
         limit_new_pi_credit_to_partners=(
@@ -358,6 +373,10 @@ def main():
         name="", invoice_month=invoice_month, data=processed_data.copy()
     )
 
+    bm_inv = bm_invoice.BMInvoice(
+        name=args.bm_usage_file, invoice_month=invoice_month, data=processed_data
+    )
+
     util.process_and_export_invoices(
         [
             lenovo_inv,
@@ -367,6 +386,7 @@ def main():
             bu_internal_inv,
             pi_inv,
             moca_prepaid_inv,
+            bm_inv,
         ],
         args.upload_to_s3,
     )
