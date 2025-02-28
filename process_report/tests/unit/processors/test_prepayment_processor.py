@@ -104,7 +104,7 @@ class TestPrepaymentProcessor(TestCase):
             ["G1"], ["P1"], ["2024-09"], ["2024-12"]
         )
         test_prepay_contacts = self._get_test_prepay_contacts(
-            ["G1"], ["G1@bu.edu"], [True]
+            ["G1"], ["G1@bu.edu"], ["Yes"]
         )
 
         answer_invoice = test_invoice.copy()
@@ -159,7 +159,7 @@ class TestPrepaymentProcessor(TestCase):
             ["G1", "G1"], project_names, ["2024-08", "2024-10"], ["2024-12", "2025-02"]
         )
         test_prepay_contacts = self._get_test_prepay_contacts(
-            ["G1"], ["G1@bu.edu"], [True]
+            ["G1"], ["G1@bu.edu"], ["Yes"]
         )
 
         answer_invoice = test_invoice.copy()
@@ -278,7 +278,7 @@ class TestPrepaymentProcessor(TestCase):
             ["G1", "G1"], project_names, ["2024-08", "2024-08"], ["2024-10", "2025-02"]
         )
         test_prepay_contacts = self._get_test_prepay_contacts(
-            ["G1"], ["G1@bu.edu"], [True]
+            ["G1"], ["G1@bu.edu"], ["Yes"]
         )
 
         answer_invoice = test_invoice.copy()
@@ -347,7 +347,7 @@ class TestPrepaymentProcessor(TestCase):
             ["G1", "G2"], project_names, ["2024-01", "2024-01"], ["2024-12", "2024-12"]
         )
         test_prepay_contacts = self._get_test_prepay_contacts(
-            ["G1", "G2"], ["G1@bu.edu", "G2@harvard.edu"], [True, False]
+            ["G1", "G2"], ["G1@bu.edu", "G2@harvard.edu"], ["Yes", "No"]
         )
 
         answer_invoice = test_invoice.copy()
