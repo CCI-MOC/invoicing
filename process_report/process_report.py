@@ -19,6 +19,7 @@ from process_report.invoices import (
     prepay_credits_snapshot,
 )
 from process_report.processors import (
+    coldfront_fetch_processor,
     validate_pi_alias_processor,
     add_institution_processor,
     lenovo_processor,
@@ -257,8 +258,13 @@ def main():
 
     ### Preliminary processing
 
+    coldfront_fetch_proc = coldfront_fetch_processor.ColdfrontFetchProcessor(
+        "", invoice_month, merged_dataframe, projects
+    )
+    coldfront_fetch_proc.process()
+
     validate_pi_alias_proc = validate_pi_alias_processor.ValidatePIAliasProcessor(
-        "", invoice_month, merged_dataframe, alias_dict
+        "", invoice_month, coldfront_fetch_proc.data, alias_dict
     )
     validate_pi_alias_proc.process()
 
