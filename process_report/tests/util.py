@@ -8,6 +8,7 @@ from process_report.invoices import (
 )
 
 from process_report.processors import (
+    coldfront_fetch_processor,
     add_institution_processor,
     validate_pi_alias_processor,
     lenovo_processor,
@@ -63,6 +64,21 @@ def new_pi_specific_invoice(
         name,
         invoice_month,
         data,
+    )
+
+
+def new_coldfront_fetch_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+    nonbillable_projects=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    if nonbillable_projects is None:
+        nonbillable_projects = []
+    return coldfront_fetch_processor.ColdfrontFetchProcessor(
+        name, invoice_month, data, nonbillable_projects
     )
 
 
