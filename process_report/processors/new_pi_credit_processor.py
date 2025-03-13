@@ -69,12 +69,10 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     def _filter_partners(self, data):
         active_partnerships = list()
         institute_list = util.load_institute_list()
-        for institute_info in institute_list:
-            if partnership_start_date := institute_info.get(
-                "mghpcc_partnership_start_date"
-            ):
+        for institute_info in institute_list.root:
+            if partnership_start_date := institute_info.mghpcc_partnership_start_date:
                 if util.get_month_diff(self.invoice_month, partnership_start_date) >= 0:
-                    active_partnerships.append(institute_info["display_name"])
+                    active_partnerships.append(institute_info.display_name)
 
         return data[data[invoice.INSTITUTION_FIELD].isin(active_partnerships)]
 

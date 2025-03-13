@@ -55,8 +55,8 @@ class NERCTotalInvoice(invoice.Invoice):
 
         included_institutions = list()
         institute_list = util.load_institute_list()
-        for institute_info in institute_list:
-            if institute_info.get("include_in_nerc_total_invoice"):
+        for institute_info in institute_list.root:
+            if institute_info.include_in_nerc_total_invoice:
                 included_institutions.append(institute_info["display_name"])
 
         self.export_data = self.data[

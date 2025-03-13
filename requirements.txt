@@ -3,3 +3,4 @@ pandas
 pyarrow
 boto3
 Jinja2
+validators
