@@ -69,9 +69,9 @@ class PrepaymentProcessor(discount_processor.DiscountProcessor):
             prepay_group_dict[group_name][
                 invoice.PREPAY_GROUP_CONTACT_FIELD
             ] = group_info[invoice.PREPAY_GROUP_CONTACT_FIELD]
-            prepay_group_dict[group_name][invoice.PREPAY_MANAGED_FIELD] = group_info[
-                invoice.PREPAY_MANAGED_FIELD
-            ]
+            prepay_group_dict[group_name][invoice.PREPAY_MANAGED_FIELD] = (
+                group_info[invoice.PREPAY_MANAGED_FIELD].lower() == "yes"
+            )
             prepay_group_dict[group_name][invoice.GROUP_BALANCE_FIELD] = 0
             prepay_group_dict[group_name][invoice.PREPAY_PROJECT_FIELD] = []
 
