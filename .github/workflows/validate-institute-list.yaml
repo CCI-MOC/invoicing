@@ -1,0 +1,25 @@
+name: Validate institute list
+on:
+  push:
+  pull_request:
+
+jobs:
+  run-unit-tests:
+    name: Validate institute list
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Validate institute list
+        run: |
+          python -m process_report.institute_list_validate --github
