@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import TestCase, mock
 import tempfile
 import pandas
 import os
@@ -104,3 +104,16 @@ class TestTimedProjects(TestCase):
 
         expected_projects = ["ProjectB", "ProjectC", "ProjectD"]
         self.assertEqual(excluded_projects, expected_projects)
+
+
+class TestValidateRequiredEnvVars(TestCase):
+    @mock.patch.dict(
+        "os.environ", {"KEYCLOAK_CLIENT_ID": "test", "KEYCLOAK_CLIENT_SECRET": "test"}
+    )
+    def test_env_vars_valid(self):
+        process_report.validate_required_env_vars()
+
+    @mock.patch.dict("os.environ", {"KEYCLOAK_CLIENT_ID": "test"})
+    def test_env_vars_missing(self):
+        with self.assertRaises(SystemExit):
+            process_report.validate_required_env_vars()
