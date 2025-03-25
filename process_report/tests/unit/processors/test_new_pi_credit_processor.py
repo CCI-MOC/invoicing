@@ -3,18 +3,32 @@ import tempfile
 import pandas
 import os
 
-
+from process_report.institute_list_models import InstituteList
 from process_report.tests import util as test_utils
 
 
 class TestNERCRates(TestCase):
     @mock.patch("process_report.util.load_institute_list")
     def test_flag_limit_new_pi_credit(self, mock_load_institute_list):
-        mock_load_institute_list.return_value = [
-            {"display_name": "BU", "mghpcc_partnership_start_date": "2024-02"},
-            {"display_name": "HU", "mghpcc_partnership_start_date": "2024-6"},
-            {"display_name": "NEU", "mghpcc_partnership_start_date": "2024-11"},
-        ]
+        mock_load_institute_list.return_value = InstituteList(
+            [
+                {
+                    "domains": [],
+                    "display_name": "BU",
+                    "mghpcc_partnership_start_date": "2024-02",
+                },
+                {
+                    "domains": [],
+                    "display_name": "HU",
+                    "mghpcc_partnership_start_date": "2024-6",
+                },
+                {
+                    "domains": [],
+                    "display_name": "NEU",
+                    "mghpcc_partnership_start_date": "2024-11",
+                },
+            ]
+        )
         sample_df = pandas.DataFrame(
             {
                 "Institution": ["BU", "HU", "NEU", "MIT", "BC"],

@@ -6,9 +6,13 @@ import functools
 
 import boto3
 
+from process_report.institute_list_models import InstituteList
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+DEFAULT_INSTITUTE_LIST = "process_report/institute_list.yaml"
 
 
 @functools.lru_cache
@@ -29,18 +33,17 @@ def get_invoice_bucket():
     return s3_resource.Bucket(os.environ.get("S3_BUCKET_NAME", "nerc-invoicing"))
 
 
-def load_institute_list():
-    with open("process_report/institute_list.yaml", "r") as f:
+def load_institute_list() -> InstituteList:
+    with open(DEFAULT_INSTITUTE_LIST, "r") as f:
         institute_list = yaml.safe_load(f)
+        return InstituteList.model_validate(institute_list)
 
-    return institute_list
 
-
-def get_institute_mapping(institute_list: list):
+def get_institute_mapping(institute_list: InstituteList):
     institute_map = dict()
-    for institute_info in institute_list:
-        for domain in institute_info["domains"]:
-            institute_map[domain] = institute_info["display_name"]
+    for institute_info in institute_list.root:
+        for domain in institute_info.domains:
+            institute_map[domain] = institute_info.display_name
 
     return institute_map
 
