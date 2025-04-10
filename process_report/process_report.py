@@ -2,6 +2,7 @@ import argparse
 import sys
 import datetime
 import logging
+from decimal import Decimal
 
 import pandas
 import pyarrow
@@ -228,11 +229,11 @@ def main():
     prepay_debits_filepath = args.prepay_debits or util.fetch_s3(
         PREPAY_DEBITS_S3_FILEPATH
     )
-    new_pi_credit_amount = args.new_pi_credit_amount or int(
-        rates_info.get_value_at("New PI Credit", invoice_month)
+    new_pi_credit_amount = args.new_pi_credit_amount or rates_info.get_value_at(
+        "New PI Credit", invoice_month, Decimal
     )
-    bu_subsidy_amount = args.BU_subsidy_amount or int(
-        rates_info.get_value_at("BU Subsidy", invoice_month)
+    bu_subsidy_amount = args.BU_subsidy_amount or rates_info.get_value_at(
+        "BU Subsidy", invoice_month, Decimal
     )
     prepay_credits, prepay_projects, prepay_info = load_prepay_csv(
         args.prepay_credits, args.prepay_projects, args.prepay_contacts
@@ -287,9 +288,8 @@ def main():
         initial_credit_amount=new_pi_credit_amount,
         limit_new_pi_credit_to_partners=(
             rates_info.get_value_at(
-                "Limit New PI Credit to MGHPCC Partners", invoice_month
-            )
-            == "True",
+                "Limit New PI Credit to MGHPCC Partners", invoice_month, bool
+            ),
         ),
     )
     new_pi_credit_proc.process()
