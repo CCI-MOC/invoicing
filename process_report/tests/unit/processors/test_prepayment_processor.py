@@ -1,12 +1,10 @@
-import os
-from unittest import TestCase
-import tempfile
 import pandas
 
 from process_report.tests import util as test_utils
+from process_report.tests.base import BaseTestCaseWithTempDir
 
 
-class TestPrepaymentProcessor(TestCase):
+class TestPrepaymentProcessor(BaseTestCaseWithTempDir):
     def _assert_result_invoice(
         self,
         test_invoice,
@@ -85,21 +83,14 @@ class TestPrepaymentProcessor(TestCase):
             }
         )
 
-    def setUp(self) -> None:
-        self.test_prepay_debits_file = tempfile.NamedTemporaryFile(
-            delete=False, mode="w+", suffix=".csv"
-        )
-
-    def tearDown(self) -> None:
-        os.remove(self.test_prepay_debits_file.name)
-
     def test_one_group_one_project(self):
         """Simple one project test and checks idempotentcy"""
         invoice_month = "2024-10"
         test_invoice = self._get_test_invoice(["P1"], [1000])
+        test_prepay_debits_file = self.tempdir / "prepay_debits.csv"
         test_prepay_credits = self._get_test_prepay_credits(["2024-01"], ["G1"], [1500])
         test_prepay_debits = self._get_test_prepay_debits([], [], [])
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         test_prepay_projects = self._get_test_prepay_projects(
             ["G1"], ["P1"], ["2024-09"], ["2024-12"]
         )
@@ -124,7 +115,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -137,7 +128,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice,
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -152,9 +143,10 @@ class TestPrepaymentProcessor(TestCase):
 
         invoice_month = "2024-06"
         test_invoice = self._get_test_invoice(project_names, [1000, 2000])
+        test_prepay_debits_file = self.tempdir / "prepay_debits.csv"
         test_prepay_credits = self._get_test_prepay_credits(["2024-04"], ["G1"], [5000])
         test_prepay_debits = self._get_test_prepay_debits([], [], [])
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         test_prepay_projects = self._get_test_prepay_projects(
             ["G1", "G1"], project_names, ["2024-08", "2024-10"], ["2024-12", "2025-02"]
         )
@@ -174,7 +166,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -194,7 +186,7 @@ class TestPrepaymentProcessor(TestCase):
         answer_invoice["Balance"] = [0, 2000]
 
         test_prepay_debits.to_csv(
-            self.test_prepay_debits_file.name, index=False
+            test_prepay_debits_file, index=False
         )  # Resetting debit file
         answer_prepay_debits = self._get_test_prepay_debits(
             [invoice_month], ["G1"], [1000]
@@ -203,7 +195,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -225,7 +217,7 @@ class TestPrepaymentProcessor(TestCase):
         answer_invoice["PI Balance"] = [0, 0]
         answer_invoice["Balance"] = [0, 0]
 
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         answer_prepay_debits = self._get_test_prepay_debits(
             [invoice_month], ["G1"], [3000]
         )
@@ -233,7 +225,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -250,13 +242,13 @@ class TestPrepaymentProcessor(TestCase):
         answer_invoice["PI Balance"] = [1000, 2000]
         answer_invoice["Balance"] = [1000, 2000]
 
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         answer_prepay_debits = self._get_test_prepay_debits([], [], [])
 
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -271,9 +263,10 @@ class TestPrepaymentProcessor(TestCase):
 
         invoice_month = "2024-10"
         test_invoice = self._get_test_invoice(project_names, [1000, 2000])
+        test_prepay_debits_file = self.tempdir / "prepay_debits.csv"
         test_prepay_credits = self._get_test_prepay_credits(["2024-04"], ["G1"], [1500])
         test_prepay_debits = self._get_test_prepay_debits([], [], [])
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         test_prepay_projects = self._get_test_prepay_projects(
             ["G1", "G1"], project_names, ["2024-08", "2024-08"], ["2024-10", "2025-02"]
         )
@@ -301,7 +294,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice,
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -317,7 +310,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice,
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -332,6 +325,7 @@ class TestPrepaymentProcessor(TestCase):
 
         invoice_month = "2024-03"
         test_invoice = self._get_test_invoice(project_names, [1000, 2000])
+        test_prepay_debits_file = self.tempdir / "prepay_debits.csv"
         test_prepay_credits = self._get_test_prepay_credits(
             ["2024-04", "2024-04", "2024-06", "2024-08", "2024-10"],
             ["G1", "G2", "G1", "G2", "G1"],
@@ -342,7 +336,7 @@ class TestPrepaymentProcessor(TestCase):
             ["G1", "G2", "G2", "G1"],
             [200, 300, 1000, 2000],
         )
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
         test_prepay_projects = self._get_test_prepay_projects(
             ["G1", "G2"], project_names, ["2024-01", "2024-01"], ["2024-12", "2024-12"]
         )
@@ -366,7 +360,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -395,7 +389,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,
@@ -406,7 +400,7 @@ class TestPrepaymentProcessor(TestCase):
         # Invoice month after all credits and debits are given. Debit entry should overwritten
         invoice_month = "2024-10"
         # Reset the debit file as it has been edited from previous test case
-        test_prepay_debits.to_csv(self.test_prepay_debits_file.name, index=False)
+        test_prepay_debits.to_csv(test_prepay_debits_file, index=False)
 
         answer_invoice["Prepaid Group Balance"] = [4000, 0]
         answer_invoice["Prepaid Group Used"] = [1000, 1500]
@@ -422,7 +416,7 @@ class TestPrepaymentProcessor(TestCase):
         self._assert_result_invoice(
             test_invoice.copy(),
             test_prepay_credits,
-            self.test_prepay_debits_file.name,
+            str(test_prepay_debits_file),
             test_prepay_projects,
             test_prepay_contacts,
             answer_invoice,

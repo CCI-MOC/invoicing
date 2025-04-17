@@ -1,10 +1,9 @@
 from unittest import TestCase, mock
-import tempfile
 import pandas
-import os
 
 from process_report.institute_list_models import InstituteList
 from process_report.tests import util as test_utils
+from process_report.tests.base import BaseTestCaseWithTempDir
 
 
 class TestNERCRates(TestCase):
@@ -56,7 +55,7 @@ class TestNERCRates(TestCase):
         self.assertTrue(output_df.equals(answer_df))
 
 
-class TestNewPICreditProcessor(TestCase):
+class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
     def _assert_result_invoice_and_old_pi_file(
         self,
         invoice_month,
@@ -106,18 +105,11 @@ class TestNewPICreditProcessor(TestCase):
             }
         )
 
-    def setUp(self) -> None:
-        self.test_old_pi_file = tempfile.NamedTemporaryFile(
-            delete=False, mode="w+", suffix=".csv"
-        )
-
-    def tearDown(self) -> None:
-        os.remove(self.test_old_pi_file.name)
-
     def test_no_new_pi(self):
         test_invoice = self._get_test_invoice(
             ["PI" for _ in range(3)], [100 for _ in range(3)]
         )
+        test_old_pi_file = self.tempdir / "old_pi.csv"
 
         # Other fields of old PI file not accessed if PI is no longer
         # eligible for new-PI credit
@@ -128,7 +120,7 @@ class TestNewPICreditProcessor(TestCase):
                 "Initial Credits": [1000],
             }
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -150,7 +142,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             "2024-06",
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -160,9 +152,8 @@ class TestNewPICreditProcessor(TestCase):
 
         # One allocation
         invoice_month = "2024-06"
-
         test_invoice = self._get_test_invoice(["PI"], [100])
-
+        test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             columns=[
                 "PI",
@@ -172,7 +163,7 @@ class TestNewPICreditProcessor(TestCase):
                 "2nd Month Used",
             ]
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -202,7 +193,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -238,7 +229,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -274,7 +265,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -285,7 +276,7 @@ class TestNewPICreditProcessor(TestCase):
         # Remaining credits completely covers costs
         invoice_month = "2024-07"
         test_invoice = self._get_test_invoice(["PI"], [200])
-
+        test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI"],
@@ -295,7 +286,7 @@ class TestNewPICreditProcessor(TestCase):
                 "2nd Month Used": [0],
             }
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -325,7 +316,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -361,7 +352,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -372,7 +363,7 @@ class TestNewPICreditProcessor(TestCase):
         # Costs partially and completely covered
         invoice_month = "2024-07"
         test_invoice = self._get_test_invoice(["PI1", "PI1", "PI2"], [800, 500, 500])
-
+        test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI1"],
@@ -382,7 +373,7 @@ class TestNewPICreditProcessor(TestCase):
                 "2nd Month Used": [0],
             }
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -412,7 +403,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -423,6 +414,7 @@ class TestNewPICreditProcessor(TestCase):
 
         invoice_month = "2024-06"
         test_invoice = self._get_test_invoice(["PI", "PI"], [500, 500])
+        test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI"],
@@ -432,7 +424,7 @@ class TestNewPICreditProcessor(TestCase):
                 "2nd Month Used": [0],
             }
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -462,7 +454,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )
@@ -481,7 +473,7 @@ class TestNewPICreditProcessor(TestCase):
                 "OpenStack GPUA100SXM4",
             ],
         )
-
+        test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             columns=[
                 "PI",
@@ -491,7 +483,7 @@ class TestNewPICreditProcessor(TestCase):
                 "2nd Month Used",
             ]
         )
-        test_old_pi_df.to_csv(self.test_old_pi_file.name, index=False)
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
 
         answer_invoice = pandas.concat(
             [
@@ -521,7 +513,7 @@ class TestNewPICreditProcessor(TestCase):
         self._assert_result_invoice_and_old_pi_file(
             invoice_month,
             test_invoice,
-            self.test_old_pi_file.name,
+            str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
         )

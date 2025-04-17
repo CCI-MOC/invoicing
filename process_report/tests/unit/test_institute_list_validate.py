@@ -1,11 +1,10 @@
-from unittest import TestCase
 import yaml
-import tempfile
 
 from process_report.institute_list_validate import main
+from process_report.tests.base import BaseTestCaseWithTempDir
 
 
-class TestInstituteListValidate(TestCase):
+class TestInstituteListValidate(BaseTestCaseWithTempDir):
     def test_valid_institute_list(self):
         test_institute_list = [
             {
@@ -20,10 +19,11 @@ class TestInstituteListValidate(TestCase):
             },
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w") as f:
+        test_file = self.tempdir / "institute_list.yaml"
+        with open(test_file, "w") as f:
             yaml.dump(test_institute_list, f)
             f.flush()
-            main(["--github", f.name])
+            main(["--github", str(test_file)])
 
     def test_invalid_institute_list(self):
         test_institute_list = [
@@ -35,8 +35,9 @@ class TestInstituteListValidate(TestCase):
             }
         ]
 
-        with tempfile.NamedTemporaryFile(mode="w") as f:
+        test_file = self.tempdir / "institute_list.yaml"
+        with open(test_file, "w") as f:
             yaml.dump(test_institute_list, f)
             f.flush()
             with self.assertRaises(SystemExit):
-                main(["--github", f.name])
+                main(["--github", str(test_file)])
