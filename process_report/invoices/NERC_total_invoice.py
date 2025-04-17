@@ -49,10 +49,6 @@ class NERCTotalInvoice(invoice.Invoice):
         return f"Invoices/{self.invoice_month}/Archive/NERC-{self.invoice_month}-Total-Invoice {util.get_iso8601_time()}.csv"
 
     def _prepare_export(self):
-        def _lower_col(data):
-            if data:
-                return str.lower(data)
-
         included_institutions = list()
         institute_list = util.load_institute_list()
         for institute_info in institute_list.root:
@@ -64,5 +60,5 @@ class NERCTotalInvoice(invoice.Invoice):
         ]
         self.export_data = self.export_data[
             self.export_data[invoice.INSTITUTION_FIELD].isin(included_institutions)
-            | (self.export_data[invoice.GROUP_MANAGED_FIELD].apply(_lower_col) == "yes")
+            | self.export_data[invoice.GROUP_MANAGED_FIELD]
         ]
