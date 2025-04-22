@@ -1,3 +1,4 @@
+import os
 import argparse
 import sys
 import datetime
@@ -98,6 +99,13 @@ def get_iso8601_time():
 
 def main():
     """Remove non-billable PIs and projects"""
+
+    chrome_binary_location = os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium")
+
+    if not os.path.exists(chrome_binary_location):
+        sys.exit(
+            f"Chrome binary does not exist at {chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
+        )
 
     parser = argparse.ArgumentParser()
 
@@ -352,7 +360,10 @@ def main():
     )
 
     pi_inv = pi_specific_invoice.PIInvoice(
-        name=args.output_folder, invoice_month=invoice_month, data=processed_data
+        name=args.output_folder,
+        invoice_month=invoice_month,
+        data=processed_data,
+        chrome_binary_location=chrome_binary_location,
     )
 
     moca_prepaid_inv = MOCA_prepaid_invoice.MOCAPrepaidInvoice(
