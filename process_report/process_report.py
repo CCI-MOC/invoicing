@@ -1,6 +1,4 @@
-import sys
 import logging
-import os
 
 import pandas
 import pyarrow
@@ -43,19 +41,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def validate_required_env_vars(required_env_vars):
-    for required_env_var in required_env_vars:
-        if required_env_var not in os.environ:
-            sys.exit(f"Required environment variable {required_env_var} is not set")
-
-
 def main():
-    """Remove non-billable PIs and projects"""
-    required_env_vars = []
-    if not invoice_settings.coldfront_api_filepath:
-        required_env_vars.extend(["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"])
-    validate_required_env_vars(required_env_vars)
-
     invoice_month = invoice_settings.invoice_month
 
     merged_dataframe = merge_csv(loader.get_csv_invoice_filepath_list())
