@@ -7,6 +7,9 @@ jobs:
   run-unit-tests:
     name: Run unit tests
     runs-on: ubuntu-latest
+    env:
+      CHROME_BIN_PATH: /usr/foo/chromium
+      COLDFRONT_API_FILEPATH: /foo/coldfront_api.json
     steps:
       - name: Check out code
         uses: actions/checkout@v6

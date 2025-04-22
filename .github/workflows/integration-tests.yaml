@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CHROME_BIN_PATH: /usr/bin/chromium
+      COLDFRONT_API_FILEPATH: /foo/coldfront_api.json
 
     steps:
       - name: Check out code

@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from dateutil.relativedelta import relativedelta
 from pydantic_settings import BaseSettings
+from pydantic import model_validator, ValidationError
 
 
 class Settings(BaseSettings):
@@ -17,6 +18,8 @@ class Settings(BaseSettings):
     )
     fetch_from_s3: bool = True
     upload_to_s3: bool = False
+
+    chrome_bin_path: str
 
     # S3 Files
     pi_remote_filepath: str = "PIs/PI.csv"
@@ -36,5 +39,25 @@ class Settings(BaseSettings):
     bu_subsidy_amount: Decimal | None = None
     lenovo_charge_info: dict[str, Decimal] | None = None
 
+    @model_validator(mode="after")
+    def check_keycloak_auth(self):
+        if not self.coldfront_api_filepath and not (
+            self.keycloak_client_id and self.keycloak_client_secret
+        ):
+            raise ValueError(
+                "You must either set coldfront_api_filepath or provide keycloak credentials in "
+                "KEYCLOAK_CLIENT_ID and KEYCLOAK_CLIENT_SECRET"
+            )
 
-invoice_settings = Settings()
+        return self
+
+
+try:
+    invoice_settings = Settings()
+except ValidationError as e:
+    for error in e.errors():
+        if error["type"] == "missing":
+            print(f"Missing required environment variable: {error['loc'][0]}")
+        else:
+            print(f"Error in environment variable {error['loc']}: {error['msg']}")
+    raise
