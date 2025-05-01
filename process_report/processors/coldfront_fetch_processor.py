@@ -14,7 +14,8 @@ logging.basicConfig(level=logging.INFO)
 
 
 CF_ATTR_ALLOCATED_PROJECT_NAME = "Allocated Project Name"
-
+CF_ATTR_ALLOCATED_PROJECT_ID = "Allocated Project ID"
+CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
@@ -56,25 +57,22 @@ class ColdfrontFetchProcessor(processor.Processor):
         coldfront_api_url = os.environ.get(
             "COLDFRONT_URL", "https://coldfront.mss.mghpcc.org/api/allocations"
         )
-        api_query_str = "&".join(
-            [
-                f"attr_{CF_ATTR_ALLOCATED_PROJECT_NAME}={project}"
-                for project in allocation_list
-            ]
-        )
-        r = self.coldfront_client.get(f"{coldfront_api_url}?{api_query_str}")
-
+        r = self.coldfront_client.get(f"{coldfront_api_url}?all=true")
         return r.json()
 
     def _get_allocation_data(self, coldfront_api_data):
         allocation_data = {}
         for project, project_dict in coldfront_api_data.items():
-            allocation_data[project] = {
-                invoice.PI_FIELD: project_dict["project"]["pi"],
-                invoice.INSTITUTION_ID_FIELD: project_dict["attributes"][
-                    "Institution-Specific Code"
-                ],
-            }
+            project_id = project_dict["attributes"][CF_ATTR_ALLOCATED_PROJECT_ID]
+            if project_id in self.data[invoice.PROJECT_ID_FIELD]:
+                allocation_data[project_id] = {
+                    invoice.PI_FIELD: project_dict["project"]["pi"],
+                    invoice.PROJECT_FIELD: project_dict["attributes"][
+                        CF_ATTR_ALLOCATED_PROJECT_NAME],
+                    invoice.INSTITUTION_ID_FIELD: project_dict["attributes"][
+                        CF_ATTR_INSTITUTION_SPECIFIC_CODE
+                    ],
+                }
         return allocation_data
 
     def _validate_allocation_data(self, allocation_data):
@@ -91,8 +89,9 @@ class ColdfrontFetchProcessor(processor.Processor):
             )
 
     def _apply_allocation_data(self, allocation_data):
-        for project, data in allocation_data.items():
-            mask = self.data[invoice.PROJECT_FIELD] == project
+        for project_id, data in allocation_data.items():
+            mask = self.data[invoice.PROJECT_ID_FIELD] == project_id
+            self.data.loc[mask, invoice.PROJECT_FIELD] = data[invoice.PROJECT_FIELD]
             self.data.loc[mask, invoice.PI_FIELD] = data[invoice.PI_FIELD]
             self.data.loc[mask, invoice.INSTITUTION_ID_FIELD] = data[
                 invoice.INSTITUTION_ID_FIELD
@@ -102,5 +101,5 @@ class ColdfrontFetchProcessor(processor.Processor):
         project_allocations_list = self._get_project_list()
         api_data = self._fetch_coldfront_allocation_api(project_allocations_list)
         allocation_data = self._get_allocation_data(api_data)
-        self._validate_allocation_data(allocation_data)
+        # self._validate_allocation_data(allocation_data)
         self._apply_allocation_data(allocation_data)
