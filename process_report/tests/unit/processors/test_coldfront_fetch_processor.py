@@ -7,30 +7,37 @@ from process_report.tests import util as test_utils
 class TestColdfrontFetchProcessor(TestCase):
     def _get_test_invoice(
         self,
-        project,
+        allocation_project_id,
+        allocation_project_name=None,
         pi=None,
         institute_code=None,
     ):
         if not pi:
-            pi = [""] * len(project)
+            pi = [""] * len(allocation_project_id)
 
         if not institute_code:
-            institute_code = [""] * len(project)
+            institute_code = [""] * len(allocation_project_id)
+
+        if not allocation_project_name:
+            allocation_project_name = allocation_project_id.copy()
 
         return pandas.DataFrame(
             {
                 "Manager (PI)": pi,
-                "Project - Allocation": project,
+                "Project - Allocation ID": allocation_project_id,
+                "Project - Allocation": allocation_project_name,
                 "Institution - Specific Code": institute_code,
             }
         )
 
-    def _get_mock_allocation_data(self, project_list, pi_list, institute_code_list):
+    def _get_mock_allocation_data(self, project_id_list, pi_list, institute_code_list):
         mock_data = {}
-        for i, project in enumerate(project_list):
+        for i, project in enumerate(project_id_list):
             mock_data[project] = {}
             mock_data[project]["project"] = {"pi": pi_list[i]}
             mock_data[project]["attributes"] = {
+                "Allocated Project ID": project,
+                "Allocated Project Name": f"{project}-name",
                 "Institution-Specific Code": institute_code_list[i]
             }
 
@@ -48,8 +55,9 @@ class TestColdfrontFetchProcessor(TestCase):
         test_invoice = self._get_test_invoice(["P1", "P1", "P2", "P3", "P4"])
         answer_invoice = self._get_test_invoice(
             ["P1", "P1", "P2", "P3", "P4"],
-            ["PI1", "PI1", "PI1", "", "PI12"],
-            ["IC1", "IC1", "", "", "IC2"],
+            allocation_project_name=["P1-name", "P1-name", "P2-name", "P3-name", "P4-name"],
+            pi=["PI1", "PI1", "PI1", "", "PI12"],
+            institute_code=["IC1", "IC1", "", "", "IC2"],
         )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice
@@ -70,23 +78,15 @@ class TestColdfrontFetchProcessor(TestCase):
         )
         test_nonbillable_projects = ["P3"]
         test_invoice = self._get_test_invoice(["P1", "P2", "P3", "P4", "P5"])
-        answer_project_set = ["P4", "P5"]
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice, nonbillable_projects=test_nonbillable_projects
         )
-
-        with self.assertLogs() as log:
-            test_coldfront_fetch_proc.process()
-            self.assertIn(
-                f"Projects {answer_project_set} not found in Coldfront and are billable! Please check the project names",
-                log.output[0],
-            )
-
-    @mock.patch("requests.sessions.Session.get")
-    def test_query_url(self, mock_request_get):
-        test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor()
-        test_coldfront_fetch_proc.coldfront_client = mock.MagicMock()
-        test_coldfront_fetch_proc._fetch_coldfront_allocation_api(["P1", "P2"])
-        test_coldfront_fetch_proc.coldfront_client.get.assert_called_with(
-            "https://coldfront.mss.mghpcc.org/api/allocations?attr_Allocated Project Name=P1&attr_Allocated Project Name=P2"
+        test_coldfront_fetch_proc.process()
+        output_invoice =  test_coldfront_fetch_proc.data
+        answer_invoice = self._get_test_invoice(
+            ["P1", "P2", "P3", "P4", "P5"],
+            allocation_project_name=["P1-name", "P2-name", "P3", "P4", "P5"],
+            pi=["PI1", "PI1", "", "", ""],
+            institute_code=["IC1", "IC2", "", "", ""],
         )
+        self.assertTrue(output_invoice.equals(answer_invoice))

@@ -17,6 +17,7 @@ CF_ATTR_ALLOCATED_PROJECT_NAME = "Allocated Project Name"
 CF_ATTR_ALLOCATED_PROJECT_ID = "Allocated Project ID"
 CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 
+
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
     nonbillable_projects: list[str]
@@ -64,11 +65,12 @@ class ColdfrontFetchProcessor(processor.Processor):
         allocation_data = {}
         for project, project_dict in coldfront_api_data.items():
             project_id = project_dict["attributes"][CF_ATTR_ALLOCATED_PROJECT_ID]
-            if project_id in self.data[invoice.PROJECT_ID_FIELD]:
+            if project_id in self.data[invoice.PROJECT_ID_FIELD].unique():
                 allocation_data[project_id] = {
                     invoice.PI_FIELD: project_dict["project"]["pi"],
                     invoice.PROJECT_FIELD: project_dict["attributes"][
-                        CF_ATTR_ALLOCATED_PROJECT_NAME],
+                        CF_ATTR_ALLOCATED_PROJECT_NAME
+                    ],
                     invoice.INSTITUTION_ID_FIELD: project_dict["attributes"][
                         CF_ATTR_INSTITUTION_SPECIFIC_CODE
                     ],
