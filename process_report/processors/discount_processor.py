@@ -51,9 +51,9 @@ class DiscountProcessor(processor.Processor):
             remaining_project_balance = project[pi_balance_field]
             applied_discount = min(remaining_project_balance, remaining_discount_amount)
             invoice.at[project_i, discount_field] = applied_discount
-            invoice.at[project_i, pi_balance_field] -= applied_discount
+            invoice.at[project_i, pi_balance_field] -= float(applied_discount)  # Explicitly converting to float to avoid warnings
             if self.IS_DISCOUNT_BY_NERC:
-                invoice.at[project_i, balance_field] -= applied_discount
+                invoice.at[project_i, balance_field] -= float(applied_discount)  # Explicitly converting to float to avoid warnings
             remaining_discount_amount -= applied_discount
             return remaining_discount_amount
 
