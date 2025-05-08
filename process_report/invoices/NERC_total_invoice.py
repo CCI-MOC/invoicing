@@ -53,7 +53,7 @@ class NERCTotalInvoice(invoice.Invoice):
         institute_list = util.load_institute_list()
         for institute_info in institute_list.root:
             if institute_info.include_in_nerc_total_invoice:
-                included_institutions.append(institute_info["display_name"])
+                included_institutions.append(institute_info.display_name)
 
         self.export_data = self.data[
             self.data[invoice.IS_BILLABLE_FIELD] & ~self.data[invoice.MISSING_PI_FIELD]
