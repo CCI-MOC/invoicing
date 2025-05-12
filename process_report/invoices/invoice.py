@@ -55,6 +55,7 @@ MISSING_PI_FIELD = "Missing PI"
 PI_BALANCE_FIELD = "PI Balance"
 PROJECT_NAME_FIELD = "Project"
 GROUP_MANAGED_FIELD = "MGHPCC Managed"
+CLUSTER_NAME_FIELD = "Cluster Name"
 ###
 
 

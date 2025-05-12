@@ -10,8 +10,18 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+NONBILLABLE_CLUSTERS = ["ocp-test"]
+
+
 @dataclass
 class ValidateBillablePIsProcessor(processor.Processor):
+    """
+    This processor validates the billable PIs and projects in the data,
+    and determines if a project is billable or not.
+
+    Every project belonging to ocp-test is nonbillable.
+    """
+
     nonbillable_pis: list[str]
     nonbillable_projects: list[str]
 
@@ -37,9 +47,13 @@ class ValidateBillablePIsProcessor(processor.Processor):
         nonbillable_projects_lowercase = [
             project.lower() for project in nonbillable_projects
         ]
-        return ~data[invoice.PI_FIELD].isin(nonbillable_pis) & ~data[
-            invoice.PROJECT_FIELD
-        ].apply(_str_to_lowercase).isin(nonbillable_projects_lowercase)
+        return (
+            ~data[invoice.PI_FIELD].isin(nonbillable_pis)
+            & ~data[invoice.PROJECT_FIELD]
+            .apply(_str_to_lowercase)
+            .isin(nonbillable_projects_lowercase)
+            & ~data[invoice.CLUSTER_NAME_FIELD].isin(NONBILLABLE_CLUSTERS)
+        )
 
     def _process(self):
         self.data[invoice.IS_BILLABLE_FIELD] = self._get_billables(
