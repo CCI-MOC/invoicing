@@ -164,6 +164,11 @@ def main():
         default="prepaid_contacts.csv",
         help="CSV listing all prepay group contact information. Defaults to 'prepaid_contacts.csv'",
     )
+    parser.add_argument(
+        "--coldfront-data-file",
+        required=False,
+        help="JSON file containing coldfront allocation data, must follow the format of the coldfront-plugin-api API",
+    )
 
     parser.add_argument(
         "--nonbillable-file",
@@ -271,7 +276,7 @@ def main():
     ### Preliminary processing
 
     coldfront_fetch_proc = coldfront_fetch_processor.ColdfrontFetchProcessor(
-        "", invoice_month, merged_dataframe, projects
+        "", invoice_month, merged_dataframe, projects, args.coldfront_data_file
     )
     coldfront_fetch_proc.process()
 
