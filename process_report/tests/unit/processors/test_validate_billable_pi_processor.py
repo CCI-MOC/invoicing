@@ -10,12 +10,21 @@ class TestValidateBillablePIProcessor(TestCase):
     def test_remove_nonbillables(self):
         pis = [uuid.uuid4().hex for x in range(10)]
         projects = [uuid.uuid4().hex for x in range(10)]
+        cluster_names = [uuid.uuid4().hex for x in range(10)]
+        cluster_names[6:8] = ["ocp-test"] * 2  # Test that ocp-test is not billable
         nonbillable_pis = pis[:3]
         nonbillable_projects = [
             project.upper() for project in projects[7:]
         ]  # Test for case-insentivity
-        billable_pis = pis[3:7]
-        data = pandas.DataFrame({"Manager (PI)": pis, "Project - Allocation": projects})
+        billable_pis = pis[3:6]
+
+        data = pandas.DataFrame(
+            {
+                "Manager (PI)": pis,
+                "Project - Allocation": projects,
+                "Cluster Name": cluster_names,
+            }
+        )
 
         validate_billable_pi_proc = test_utils.new_validate_billable_pi_processor(
             data=data,
@@ -29,7 +38,8 @@ class TestValidateBillablePIProcessor(TestCase):
         self.assertTrue(
             data[data["Project - Allocation"].isin(nonbillable_projects)].empty
         )
-        self.assertTrue(data["Manager (PI)"].isin(billable_pis).all())
+        self.assertTrue(data[data["Cluster Name"] == "ocp-test"].empty)
+        self.assertTrue(data["Manager (PI)"].tolist() == billable_pis)
 
     def test_empty_pi_name(self):
         test_data = pandas.DataFrame(
@@ -42,6 +52,7 @@ class TestValidateBillablePIProcessor(TestCase):
                     "ProjectD",
                     "ProjectE",
                 ],
+                "Cluster Name": ["test-cluster"] * 5,
             }
         )
         self.assertEqual(1, len(test_data[pandas.isna(test_data["Manager (PI)"])]))

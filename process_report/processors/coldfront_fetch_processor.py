@@ -7,7 +7,7 @@ from dataclasses import dataclass
 import requests
 
 from process_report.invoices import invoice
-from process_report.processors import processor
+from process_report.processors import processor, validate_billable_pi_processor
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -52,7 +52,11 @@ class ColdfrontFetchProcessor(processor.Processor):
         return session
 
     def _get_project_id_list(self):
-        return self.data[invoice.PROJECT_ID_FIELD].unique()
+        """Returns list of project IDs from billable clusters"""
+        nonbillable_cluster_mask = ~self.data[invoice.CLUSTER_NAME_FIELD].isin(
+            validate_billable_pi_processor.NONBILLABLE_CLUSTERS
+        )
+        return self.data[nonbillable_cluster_mask][invoice.PROJECT_ID_FIELD].unique()
 
     def _fetch_coldfront_allocation_api(self):
         coldfront_api_url = os.environ.get(
