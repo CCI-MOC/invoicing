@@ -92,11 +92,21 @@ class PIInvoice(invoice.Invoice):
             if column_name in pi_projects.columns:
                 column_sums.append(pi_projects[column_name].sum())
                 sum_columns_list.append(column_name)
-        pi_projects.loc[
-            len(pi_projects)
-        ] = None  # Adds a new row to end of dataframe initialized with None
-        pi_projects.loc[pi_projects.index[-1], invoice.INVOICE_DATE_FIELD] = "Total"
-        pi_projects.loc[pi_projects.index[-1], sum_columns_list] = column_sums
+
+        # Create a new row with proper dtypes
+        new_row = {col: None for col in pi_projects.columns}
+        new_row[invoice.INVOICE_DATE_FIELD] = "Total"
+        for col, val in zip(sum_columns_list, column_sums):
+            new_row[col] = val
+
+        # Convert all columns to object type before concatenation to avoid dtype warnings
+        pi_projects = pi_projects.astype("object")
+
+        # Add the totals row
+        pi_projects = pandas.concat(
+            [pi_projects, pandas.DataFrame([new_row]).astype("object")],
+            ignore_index=True,
+        )
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
@@ -105,7 +115,15 @@ class PIInvoice(invoice.Invoice):
                     lambda data: data if pandas.isna(data) else f"${data}"
                 )
 
-        pi_projects.fillna("", inplace=True)
+        # Convert all numeric columns to strings before filling NA values
+        # This prevents dtype incompatibility warnings
+        for col in pi_projects.columns:
+            # First ensure all columns are object type
+            if pi_projects[col].dtype.name.startswith(("float", "int")):
+                pi_projects[col] = pi_projects[col].astype("object")
+
+            # Then fill NA values with empty strings
+            pi_projects[col] = pi_projects[col].fillna("")
 
         return pi_projects
 
