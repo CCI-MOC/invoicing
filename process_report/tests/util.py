@@ -5,6 +5,7 @@ from process_report.invoices import (
     billable_invoice,
     pi_specific_invoice,
     prepay_credits_snapshot,
+    NERC_total_invoice,
 )
 
 from process_report.processors import (
@@ -61,6 +62,20 @@ def new_pi_specific_invoice(
     if data is None:
         data = pandas.DataFrame()
     return pi_specific_invoice.PIInvoice(
+        name,
+        invoice_month,
+        data,
+    )
+
+
+def new_nerc_total_invoice(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return NERC_total_invoice.NERCTotalInvoice(
         name,
         invoice_month,
         data,

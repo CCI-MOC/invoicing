@@ -34,9 +34,9 @@ class AddInstitutionProcessor(processor.Processor):
             if pandas.isna(pi_name):
                 logger.info(f"Project {row[invoice.PROJECT_FIELD]} has no PI")
             else:
-                self.data.at[
-                    i, invoice.INSTITUTION_FIELD
-                ] = util.get_institution_from_pi(institute_map, pi_name)
+                self.data.at[i, invoice.INSTITUTION_FIELD] = (
+                    util.get_institution_from_pi(institute_map, pi_name)
+                )
 
     def _process(self):
         self._add_institution()
