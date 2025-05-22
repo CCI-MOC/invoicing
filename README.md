@@ -22,6 +22,31 @@ After processing is done, the processed dataframe is filtered and exported into 
 
 The filtering and exporting of invoices are done in [`Invoice`](./process_report/invoices/invoice.py) subclasses, such as the [`LenovoInvoice`](./process_report/invoices/lenovo_invoice.py)
 
+## Requirements
+
+To install the required python packages please use the `requirements.txt` file in the `invoicing` root directory.
+
+To install the packages:
+```bash
+pip install -r requirements.txt
+```
+
+This project uses Chromium for PDF generation of PI-specific invoices. Make sure Chromium is installed on your system before running the invoicing pipeline.
+
+To install Chromium on Ubuntu/Debian:
+```bash
+sudo apt-get update
+sudo apt-get install chromium-browser
+```
+
+To install Chromium on other systems, please refer to your package manager's documentation.
+
+*Make sure the env var CHROME_BIN_PATH is set correctly:*
+
+```
+export CHROME_BIN_PATH=<path_to_chrome_binary>
+```
+
 ## Try it yourself
 The entrypoint of the invoicing system is [`process_report.py`](./process_report/process_report.py). To test the entire invoicing pipeline end-to-end:
 
