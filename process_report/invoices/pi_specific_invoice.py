@@ -114,7 +114,6 @@ class PIInvoice(invoice.Invoice):
             ignore_index=True,
         )
 
-
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
             if column_name in pi_projects.columns:
