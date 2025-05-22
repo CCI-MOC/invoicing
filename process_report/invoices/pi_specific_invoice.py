@@ -92,11 +92,17 @@ class PIInvoice(invoice.Invoice):
             if column_name in pi_projects.columns:
                 column_sums.append(pi_projects[column_name].sum())
                 sum_columns_list.append(column_name)
-        pi_projects.loc[
-            len(pi_projects)
-        ] = None  # Adds a new row to end of dataframe initialized with None
+
+        # Add a row with None values (this will convert int64 columns to float64 and bool to object)
+        pi_projects.loc[len(pi_projects)] = None
+
+        # Set Invoice Month and totals - add Invoice Month column if it doesn't exist
+        if invoice.INVOICE_DATE_FIELD not in pi_projects.columns:
+            pi_projects[invoice.INVOICE_DATE_FIELD] = None
+
         pi_projects.loc[pi_projects.index[-1], invoice.INVOICE_DATE_FIELD] = "Total"
-        pi_projects.loc[pi_projects.index[-1], sum_columns_list] = column_sums
+        for col, val in zip(sum_columns_list, column_sums):
+            pi_projects.loc[pi_projects.index[-1], col] = val
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
@@ -154,6 +160,9 @@ class PIInvoice(invoice.Invoice):
 
             pi_dataframe = self._get_pi_dataframe(self.export_data, pi)
             pi_instituition = pi_dataframe[invoice.INSTITUTION_FIELD].iat[0]
+
+            # Convert to StringDtype for HTML rendering
+            pi_dataframe = pi_dataframe.astype(pandas.StringDtype())
 
             with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as temp_fd:
                 _create_html_invoice(temp_fd)
