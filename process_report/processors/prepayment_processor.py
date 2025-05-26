@@ -38,11 +38,31 @@ class PrepaymentProcessor(discount_processor.DiscountProcessor):
         return prepay_debits
 
     def _prepare(self):
-        self.data[invoice.GROUP_NAME_FIELD] = None
-        self.data[invoice.GROUP_INSTITUTION_FIELD] = None
-        self.data[invoice.GROUP_MANAGED_FIELD] = None
-        self.data[invoice.GROUP_BALANCE_FIELD] = None
-        self.data[invoice.GROUP_BALANCE_USED_FIELD] = None
+        self._create_column(
+            invoice.GROUP_NAME_FIELD,
+            invoice.STRING_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.GROUP_INSTITUTION_FIELD,
+            invoice.STRING_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.GROUP_MANAGED_FIELD,
+            invoice.BOOL_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.GROUP_BALANCE_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.GROUP_BALANCE_USED_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            None,
+        )
 
         self.prepay_debits = self._load_prepay_debits(self.prepay_debits_filepath)
         self.group_info_dict = self._get_prepay_group_dict()

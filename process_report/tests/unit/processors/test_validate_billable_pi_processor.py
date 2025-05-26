@@ -1,12 +1,11 @@
-from unittest import TestCase
 import pandas
 import uuid
 import math
 
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestValidateBillablePIProcessor(TestCase):
+class TestValidateBillablePIProcessor(base.BaseTestCase):
     def test_remove_nonbillables(self):
         pis = [uuid.uuid4().hex for x in range(10)]
         projects = [uuid.uuid4().hex for x in range(10)]
@@ -18,7 +17,7 @@ class TestValidateBillablePIProcessor(TestCase):
         ]  # Test for case-insentivity
         billable_pis = pis[3:6]
 
-        data = pandas.DataFrame(
+        data = self._create_test_invoice(
             {
                 "Manager (PI)": pis,
                 "Project - Allocation": projects,
@@ -42,7 +41,7 @@ class TestValidateBillablePIProcessor(TestCase):
         self.assertTrue(data["Manager (PI)"].tolist() == billable_pis)
 
     def test_empty_pi_name(self):
-        test_data = pandas.DataFrame(
+        test_data = self._create_test_invoice(
             {
                 "Manager (PI)": ["PI1", math.nan, "PI1", "PI2", "PI2"],
                 "Project - Allocation": [

@@ -1,12 +1,9 @@
-from unittest import TestCase
-import pandas
-
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestLenovoProcessor(TestCase):
+class TestLenovoProcessor(base.BaseTestCase):
     def test_process_lenovo(self):
-        test_invoice = pandas.DataFrame(
+        test_invoice = self._create_test_invoice(
             {
                 "SU Hours (GBhr or SUhr)": [1, 10, 100, 4, 432, 10],
             }
@@ -19,4 +16,7 @@ class TestLenovoProcessor(TestCase):
 
         lenovo_proc = test_utils.new_lenovo_processor(data=test_invoice)
         lenovo_proc.process()
-        self.assertTrue(lenovo_proc.data.equals(answer_invoice))
+        output_invoice = lenovo_proc.data
+
+        answer_invoice = answer_invoice.astype(output_invoice.dtypes)
+        self.assertTrue(output_invoice.equals(answer_invoice))
