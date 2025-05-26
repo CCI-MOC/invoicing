@@ -19,7 +19,16 @@ class BUSubsidyProcessor(discount_processor.DiscountProcessor):
             else:
                 return project_alloc[: project_alloc.rfind("-")]
 
-        self.data[invoice.PROJECT_NAME_FIELD] = self.data.apply(get_project, axis=1)
+        self._create_column(
+            invoice.PROJECT_NAME_FIELD,
+            invoice.STRING_FIELD_TYPE,
+            self.data.apply(get_project, axis=1),
+        )
+        self._create_column(
+            invoice.SUBSIDY_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            0,
+        )
         self.data[invoice.SUBSIDY_FIELD] = Decimal(0)
 
     def _process(self):
