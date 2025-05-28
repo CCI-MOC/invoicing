@@ -1,5 +1,6 @@
 from unittest import TestCase, mock
 import pandas
+from decimal import Decimal
 
 from process_report.institute_list_models import InstituteList
 from process_report.tests import util as test_utils
@@ -107,7 +108,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
     def test_no_new_pi(self):
         test_invoice = self._get_test_invoice(
-            ["PI" for _ in range(3)], [100 for _ in range(3)]
+            ["PI" for _ in range(3)], [Decimal("100.0") for _ in range(3)]
         )
         test_old_pi_file = self.tempdir / "old_pi.csv"
 
@@ -117,7 +118,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-01"],
-                "Initial Credits": [1000],
+                "Initial Credits": [Decimal("1000.0")],
             }
         )
         test_old_pi_df.to_csv(test_old_pi_file, index=False)
@@ -129,8 +130,8 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                     {
                         "Credit": [None for _ in range(3)],
                         "Credit Code": [None for _ in range(3)],
-                        "PI Balance": [100 for _ in range(3)],
-                        "Balance": [100 for _ in range(3)],
+                        "PI Balance": [Decimal("100.0") for _ in range(3)],
+                        "Balance": [Decimal("100.0") for _ in range(3)],
                     }
                 ),
             ],
@@ -152,7 +153,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
         # One allocation
         invoice_month = "2024-06"
-        test_invoice = self._get_test_invoice(["PI"], [100])
+        test_invoice = self._get_test_invoice(["PI"], [Decimal("100.0")])
         test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             columns=[
@@ -170,10 +171,10 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [100],
+                        "Credit": [Decimal("100.0")],
                         "Credit Code": ["0002"],
-                        "PI Balance": [0],
-                        "Balance": [0],
+                        "PI Balance": [Decimal("0.0")],
+                        "Balance": [Decimal("0.0")],
                     }
                 ),
             ],
@@ -184,9 +185,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [100],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("100.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
 
@@ -199,17 +200,19 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         )
 
         # Two allocations, costs partially covered
-        test_invoice = self._get_test_invoice(["PI", "PI"], [500, 1000])
+        test_invoice = self._get_test_invoice(
+            ["PI", "PI"], [Decimal("500.0"), Decimal("1000.0")]
+        )
 
         answer_invoice = pandas.concat(
             [
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500, 500],
+                        "Credit": [Decimal("500.0"), Decimal("500.0")],
                         "Credit Code": ["0002", "0002"],
-                        "PI Balance": [0, 500],
-                        "Balance": [0, 500],
+                        "PI Balance": [Decimal("0.0"), Decimal("500.0")],
+                        "Balance": [Decimal("0.0"), Decimal("500.0")],
                     }
                 ),
             ],
@@ -220,9 +223,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [1000],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("1000.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
 
@@ -235,17 +238,19 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         )
 
         # Two allocations, costs completely covered
-        test_invoice = self._get_test_invoice(["PI", "PI"], [500, 400])
+        test_invoice = self._get_test_invoice(
+            ["PI", "PI"], [Decimal("500.0"), Decimal("400.0")]
+        )
 
         answer_invoice = pandas.concat(
             [
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500, 400],
+                        "Credit": [Decimal("500.0"), Decimal("400.0")],
                         "Credit Code": ["0002", "0002"],
-                        "PI Balance": [0, 0],
-                        "Balance": [0, 0],
+                        "PI Balance": [Decimal("0.0"), Decimal("0.0")],
+                        "Balance": [Decimal("0.0"), Decimal("0.0")],
                     }
                 ),
             ],
@@ -256,9 +261,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [900],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("900.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
 
@@ -275,15 +280,15 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
         # Remaining credits completely covers costs
         invoice_month = "2024-07"
-        test_invoice = self._get_test_invoice(["PI"], [200])
+        test_invoice = self._get_test_invoice(["PI"], [Decimal("200.0")])
         test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [500],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("500.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
         test_old_pi_df.to_csv(test_old_pi_file, index=False)
@@ -293,10 +298,10 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [200],
+                        "Credit": [Decimal("200.0")],
                         "Credit Code": ["0002"],
-                        "PI Balance": [0],
-                        "Balance": [0],
+                        "PI Balance": [Decimal("0.0")],
+                        "Balance": [Decimal("0.0")],
                     }
                 ),
             ],
@@ -307,9 +312,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [500],
-                "2nd Month Used": [200],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("500.0")],
+                "2nd Month Used": [Decimal("200.0")],
             }
         )
 
@@ -322,17 +327,17 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         )
 
         # Remaining credits partially covers costs
-        test_invoice = self._get_test_invoice(["PI"], [600])
+        test_invoice = self._get_test_invoice(["PI"], [Decimal("600.0")])
 
         answer_invoice = pandas.concat(
             [
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500],
+                        "Credit": [Decimal("500.0")],
                         "Credit Code": ["0002"],
-                        "PI Balance": [100],
-                        "Balance": [100],
+                        "PI Balance": [Decimal("100.0")],
+                        "Balance": [Decimal("100.0")],
                     }
                 ),
             ],
@@ -343,9 +348,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [500],
-                "2nd Month Used": [500],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("500.0")],
+                "2nd Month Used": [Decimal("500.0")],
             }
         )
 
@@ -362,15 +367,18 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
         # Costs partially and completely covered
         invoice_month = "2024-07"
-        test_invoice = self._get_test_invoice(["PI1", "PI1", "PI2"], [800, 500, 500])
+        test_invoice = self._get_test_invoice(
+            ["PI1", "PI1", "PI2"],
+            [Decimal("800.0"), Decimal("500.0"), Decimal("500.0")],
+        )
         test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI1"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [500],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("500.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
         test_old_pi_df.to_csv(test_old_pi_file, index=False)
@@ -380,10 +388,14 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500, None, 500],
+                        "Credit": [Decimal("500.0"), None, Decimal("500.0")],
                         "Credit Code": ["0002", None, "0002"],
-                        "PI Balance": [300, 500, 0],
-                        "Balance": [300, 500, 0],
+                        "PI Balance": [
+                            Decimal("300.0"),
+                            Decimal("500.0"),
+                            Decimal("0.0"),
+                        ],
+                        "Balance": [Decimal("300.0"), Decimal("500.0"), Decimal("0.0")],
                     }
                 ),
             ],
@@ -394,9 +406,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI1", "PI2"],
                 "First Invoice Month": ["2024-06", "2024-07"],
-                "Initial Credits": [1000, 1000],
-                "1st Month Used": [500, 500],
-                "2nd Month Used": [500, 0],
+                "Initial Credits": [Decimal("1000.0"), Decimal("1000.0")],
+                "1st Month Used": [Decimal("500.0"), Decimal("500.0")],
+                "2nd Month Used": [Decimal("500.0"), Decimal("0.0")],
             }
         )
 
@@ -413,15 +425,17 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         their initial credits and PI entry could be overwritten"""
 
         invoice_month = "2024-06"
-        test_invoice = self._get_test_invoice(["PI", "PI"], [500, 500])
+        test_invoice = self._get_test_invoice(
+            ["PI", "PI"], [Decimal("500.0"), Decimal("500.0")]
+        )
         test_old_pi_file = self.tempdir / "old_pi.csv"
         test_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [500],
-                "1st Month Used": [200],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("500.0")],
+                "1st Month Used": [Decimal("200.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
         test_old_pi_df.to_csv(test_old_pi_file, index=False)
@@ -431,10 +445,10 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500, None],
+                        "Credit": [Decimal("500.0"), None],
                         "Credit Code": ["0002", None],
-                        "PI Balance": [0, 500],
-                        "Balance": [0, 500],
+                        "PI Balance": [Decimal("0.0"), Decimal("500.0")],
+                        "Balance": [Decimal("0.0"), Decimal("500.0")],
                     }
                 ),
             ],
@@ -445,9 +459,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [500],
-                "1st Month Used": [500],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("500.0")],
+                "1st Month Used": [Decimal("500.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
 
@@ -465,7 +479,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         invoice_month = "2024-06"
         test_invoice = self._get_test_invoice(
             ["PI", "PI", "PI", "PI"],
-            [600, 600, 600, 600],
+            [Decimal("600.0"), Decimal("600.0"), Decimal("600.0"), Decimal("600.0")],
             [
                 "CPU",
                 "OpenShift GPUA100SXM4",
@@ -490,10 +504,20 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [600, None, 400, None],
+                        "Credit": [Decimal("600.0"), None, Decimal("400.0"), None],
                         "Credit Code": ["0002", None, "0002", None],
-                        "PI Balance": [0, 600, 200, 600],
-                        "Balance": [0, 600, 200, 600],
+                        "PI Balance": [
+                            Decimal("0.0"),
+                            Decimal("600.0"),
+                            Decimal("200.0"),
+                            Decimal("600.0"),
+                        ],
+                        "Balance": [
+                            Decimal("0.0"),
+                            Decimal("600.0"),
+                            Decimal("200.0"),
+                            Decimal("600.0"),
+                        ],
                     }
                 ),
             ],
@@ -504,9 +528,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [1000],
-                "1st Month Used": [1000],
-                "2nd Month Used": [0],
+                "Initial Credits": [Decimal("1000.0")],
+                "1st Month Used": [Decimal("1000.0")],
+                "2nd Month Used": [Decimal("0.0")],
             }
         )
 
