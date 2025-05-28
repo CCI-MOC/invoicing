@@ -95,12 +95,6 @@ class PIInvoice(invoice.Invoice):
 
         # Create a new row with proper dtypes
         new_row = {col: None for col in pi_projects.columns}
-
-        # Add Invoice Month column if it doesn't exist
-        if invoice.INVOICE_DATE_FIELD not in pi_projects.columns:
-            pi_projects[invoice.INVOICE_DATE_FIELD] = None
-            new_row[invoice.INVOICE_DATE_FIELD] = None
-
         new_row[invoice.INVOICE_DATE_FIELD] = "Total"
         for col, val in zip(sum_columns_list, column_sums):
             new_row[col] = val
@@ -118,7 +112,7 @@ class PIInvoice(invoice.Invoice):
         for column_name in self.DOLLAR_COLUMN_LIST:
             if column_name in pi_projects.columns:
                 pi_projects[column_name] = pi_projects[column_name].apply(
-                    lambda data: data if pandas.isna(data) else f"${float(data)}"
+                    lambda data: data if pandas.isna(data) else f"${data}"
                 )
 
         # Convert all numeric columns to strings before filling NA values
