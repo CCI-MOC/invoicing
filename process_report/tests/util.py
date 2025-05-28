@@ -87,13 +87,14 @@ def new_coldfront_fetch_processor(
     invoice_month="0000-00",
     data=None,
     nonbillable_projects=None,
+    coldfront_data_filepath=None,
 ):
     if data is None:
         data = pandas.DataFrame()
     if nonbillable_projects is None:
         nonbillable_projects = []
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
-        name, invoice_month, data, nonbillable_projects
+        name, invoice_month, data, nonbillable_projects, coldfront_data_filepath
     )
 
 

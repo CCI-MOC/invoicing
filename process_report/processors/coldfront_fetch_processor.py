@@ -2,6 +2,7 @@ import os
 import sys
 import functools
 import logging
+import json
 from dataclasses import dataclass
 
 import requests
@@ -21,6 +22,7 @@ CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
     nonbillable_projects: list[str]
+    coldfront_data_filepath: str
 
     @functools.cached_property
     def coldfront_client(self):
@@ -65,6 +67,16 @@ class ColdfrontFetchProcessor(processor.Processor):
         r = self.coldfront_client.get(f"{coldfront_api_url}?all=true")
 
         return r.json()
+
+    def _get_coldfront_api_data(self):
+        if self.coldfront_data_filepath:
+            logger.info(
+                f"Using Coldfront data from {self.coldfront_data_filepath} instead of API"
+            )
+            with open(self.coldfront_data_filepath, "r") as f:
+                return json.load(f)
+        else:
+            return self._fetch_coldfront_allocation_api()
 
     def _get_allocation_data(self, coldfront_api_data):
         """Returns a mapping of project IDs to a dict of project name, PI name, and institution code."""
@@ -113,7 +125,7 @@ class ColdfrontFetchProcessor(processor.Processor):
             ]
 
     def _process(self):
-        api_data = self._fetch_coldfront_allocation_api()
+        api_data = self._get_coldfront_api_data()
         allocation_data = self._get_allocation_data(api_data)
         self._validate_allocation_data(allocation_data)
         self._apply_allocation_data(allocation_data)
