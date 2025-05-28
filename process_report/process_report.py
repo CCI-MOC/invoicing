@@ -19,6 +19,7 @@ from process_report.invoices import (
     pi_specific_invoice,
     MOCA_prepaid_invoice,
     prepay_credits_snapshot,
+    ocp_test_invoice,
 )
 from process_report.processors import (
     coldfront_fetch_processor,
@@ -199,6 +200,12 @@ def main():
         "--Lenovo-file",
         required=False,
         default="Lenovo",
+        help="Name of output csv for Lenovo SU Types invoice",
+    )
+    parser.add_argument(
+        "--ocp-test-file",
+        required=False,
+        default="OCP-TEST",
         help="Name of output csv for Lenovo SU Types invoice",
     )
     parser.add_argument(
@@ -384,6 +391,10 @@ def main():
         prepay_contacts=prepay_info,
     )
 
+    ocp_test_inv = ocp_test_invoice.OcpTestInvoice(
+        name="", invoice_month=invoice_month, data=processed_data.copy()
+    )
+
     util.process_and_export_invoices(
         [
             lenovo_inv,
@@ -394,6 +405,7 @@ def main():
             pi_inv,
             moca_prepaid_inv,
             prepay_credits_snap,
+            ocp_test_inv,
         ],
         args.upload_to_s3,
     )
