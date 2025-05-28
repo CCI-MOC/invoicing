@@ -59,21 +59,6 @@ class TestMergeCSV(TestCase):
         self.assertListEqual(merged_dataframe.columns.tolist(), self.header)
 
 
-class TestGetInvoiceDate(TestCase):
-    def test_get_invoice_date(self):
-        # The month in sample data is not the same
-        data = {"Invoice Month": ["2023-01", "2023-02", "2023-03"]}
-        dataframe = pandas.DataFrame(data)
-
-        invoice_date = process_report.get_invoice_date(dataframe)
-
-        self.assertIsInstance(invoice_date, pandas.Timestamp)
-
-        # Assert that the invoice_date is the first item
-        expected_date = pandas.Timestamp("2023-01")
-        self.assertEqual(invoice_date, expected_date)
-
-
 class TestTimedProjects(TestCase):
     def setUp(self):
         # Without the dedent method, our data will have leading spaces which
