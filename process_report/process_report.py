@@ -1,6 +1,5 @@
 import argparse
 import sys
-import datetime
 import logging
 from decimal import Decimal
 import os
@@ -31,6 +30,11 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
 )
+from process_report.invoices.invoice import (
+    RATE_FIELD,
+    COST_FIELD,
+)
+
 
 ### PI file field names
 PI_PI_FIELD = "PI"
@@ -40,25 +44,6 @@ PI_1ST_USED = "1st Month Used"
 PI_2ND_USED = "2nd Month Used"
 ###
 
-
-### Invoice field names
-INVOICE_DATE_FIELD = "Invoice Month"
-PROJECT_FIELD = "Project - Allocation"
-PROJECT_ID_FIELD = "Project - Allocation ID"
-PI_FIELD = "Manager (PI)"
-INVOICE_EMAIL_FIELD = "Invoice Email"
-INVOICE_ADDRESS_FIELD = "Invoice Address"
-INSTITUTION_FIELD = "Institution"
-INSTITUTION_ID_FIELD = "Institution - Specific Code"
-SU_HOURS_FIELD = "SU Hours (GBhr or SUhr)"
-SU_TYPE_FIELD = "SU Type"
-RATE_FIELD = "Rate"
-COST_FIELD = "Cost"
-CREDIT_FIELD = "Credit"
-CREDIT_CODE_FIELD = "Credit Code"
-SUBSIDY_FIELD = "Subsidy"
-BALANCE_FIELD = "Balance"
-###
 
 PI_S3_FILEPATH = "PIs/PI.csv"
 ALIAS_S3_FILEPATH = "PIs/alias.csv"
@@ -95,10 +80,6 @@ def load_prepay_csv(prepay_credits_path, prepay_projects_path, prepay_contacts_p
         pandas.read_csv(prepay_projects_path),
         pandas.read_csv(prepay_contacts_path),
     )
-
-
-def get_iso8601_time():
-    return datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
 
 def validate_required_env_vars():
@@ -443,17 +424,6 @@ def merge_csv(files):
     return merged_dataframe
 
 
-def get_invoice_date(dataframe):
-    """Returns the invoice date as a pandas timestamp object
-
-    Note that it only checks the first entry because it should
-    be the same for every row.
-    """
-    invoice_date_str = dataframe[INVOICE_DATE_FIELD][0]
-    invoice_date = pandas.to_datetime(invoice_date_str, format="%Y-%m")
-    return invoice_date
-
-
 def timed_projects(timed_projects_file, invoice_date):
     """Returns list of projects that should be excluded based on dates"""
     dataframe = pandas.read_csv(timed_projects_file)
@@ -472,11 +442,9 @@ def timed_projects(timed_projects_file, invoice_date):
 
 def backup_to_s3_old_pi_file(old_pi_file):
     invoice_bucket = util.get_invoice_bucket()
-    invoice_bucket.upload_file(old_pi_file, f"PIs/Archive/PI {get_iso8601_time()}.csv")
-
-
-def export_billables(dataframe, output_file):
-    dataframe.to_csv(output_file, index=False)
+    invoice_bucket.upload_file(
+        old_pi_file, f"PIs/Archive/PI {util.get_iso8601_time()}.csv"
+    )
 
 
 if __name__ == "__main__":
