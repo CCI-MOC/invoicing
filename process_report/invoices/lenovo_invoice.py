@@ -5,7 +5,12 @@ import process_report.invoices.invoice as invoice
 
 @dataclass
 class LenovoInvoice(invoice.Invoice):
-    LENOVO_SU_TYPES = ["OpenShift GPUA100SXM4", "OpenStack GPUA100SXM4"]
+    LENOVO_SU_TYPES = [
+        "OpenShift GPUA100SXM4",
+        "OpenStack GPUA100SXM4",
+        "OpenStack GPUH100",
+        "BM GPUH100",
+    ]
 
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
