@@ -64,6 +64,8 @@ class PIInvoice(invoice.Invoice):
         invoice.BALANCE_FIELD,
     ]
 
+    chrome_binary_location: str
+
     def _prepare(self):
         self.export_data = self.data[
             self.data[invoice.IS_BILLABLE_FIELD] & ~self.data[invoice.MISSING_PI_FIELD]
@@ -120,12 +122,9 @@ class PIInvoice(invoice.Invoice):
             temp_fd.flush()
 
         def _create_pdf_invoice(temp_fd_name):
-            chrome_binary_location = os.environ.get(
-                "CHROME_BIN_PATH", "/usr/bin/chromium"
-            )
-            if not os.path.exists(chrome_binary_location):
+            if not os.path.exists(self.chrome_binary_location):
                 sys.exit(
-                    f"Chrome binary does not exist at {chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
+                    f"Chrome binary does not exist at {self.chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
                 )
 
             invoice_pdf_path = (
@@ -133,7 +132,7 @@ class PIInvoice(invoice.Invoice):
             )
             subprocess.run(
                 [
-                    chrome_binary_location,
+                    self.chrome_binary_location,
                     "--headless",
                     "--no-sandbox",
                     f"--print-to-pdf={invoice_pdf_path}",
