@@ -5,6 +5,7 @@ from process_report.invoices import (
     billable_invoice,
     pi_specific_invoice,
     prepay_credits_snapshot,
+    NERC_total_invoice,
 )
 
 from process_report.processors import (
@@ -67,18 +68,33 @@ def new_pi_specific_invoice(
     )
 
 
+def new_nerc_total_invoice(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return NERC_total_invoice.NERCTotalInvoice(
+        name,
+        invoice_month,
+        data,
+    )
+
+
 def new_coldfront_fetch_processor(
     name="",
     invoice_month="0000-00",
     data=None,
     nonbillable_projects=None,
+    coldfront_data_filepath=None,
 ):
     if data is None:
         data = pandas.DataFrame()
     if nonbillable_projects is None:
         nonbillable_projects = []
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
-        name, invoice_month, data, nonbillable_projects
+        name, invoice_month, data, nonbillable_projects, coldfront_data_filepath
     )
 
 

@@ -19,6 +19,7 @@ from process_report.invoices import (
     pi_specific_invoice,
     MOCA_prepaid_invoice,
     prepay_credits_snapshot,
+    ocp_test_invoice,
 )
 from process_report.processors import (
     coldfront_fetch_processor,
@@ -63,8 +64,6 @@ PI_S3_FILEPATH = "PIs/PI.csv"
 ALIAS_S3_FILEPATH = "PIs/alias.csv"
 PREPAY_DEBITS_S3_FILEPATH = "Prepay/prepay_debits.csv"
 
-REQUIRED_ENV_VARS = ("KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET")
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -100,8 +99,8 @@ def get_iso8601_time():
     return datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
 
-def validate_required_env_vars():
-    for required_env_var in REQUIRED_ENV_VARS:
+def validate_required_env_vars(required_env_vars):
+    for required_env_var in required_env_vars:
         if required_env_var not in os.environ:
             sys.exit(f"Required environment variable {required_env_var} is not set")
 
@@ -164,6 +163,11 @@ def main():
         default="prepaid_contacts.csv",
         help="CSV listing all prepay group contact information. Defaults to 'prepaid_contacts.csv'",
     )
+    parser.add_argument(
+        "--coldfront-data-file",
+        required=False,
+        help="JSON file containing coldfront allocation data, must follow the format of the coldfront-plugin-api API",
+    )
 
     parser.add_argument(
         "--nonbillable-file",
@@ -202,6 +206,12 @@ def main():
         help="Name of output csv for Lenovo SU Types invoice",
     )
     parser.add_argument(
+        "--ocp-test-file",
+        required=False,
+        default="OCP_TEST",
+        help="Name of output csv for Openshift test cluster invoice",
+    )
+    parser.add_argument(
         "--old-pi-file",
         required=False,
         help="Name of csv file listing previously billed PIs. If not provided, defaults to fetching from S3",
@@ -230,7 +240,10 @@ def main():
     )
     args = parser.parse_args()
 
-    validate_required_env_vars()
+    required_env_vars = []
+    if not args.coldfront_data_file:
+        required_env_vars.extend(["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"])
+    validate_required_env_vars(required_env_vars)
 
     invoice_month = args.invoice_month
 
@@ -271,7 +284,7 @@ def main():
     ### Preliminary processing
 
     coldfront_fetch_proc = coldfront_fetch_processor.ColdfrontFetchProcessor(
-        "", invoice_month, merged_dataframe, projects
+        "", invoice_month, merged_dataframe, projects, args.coldfront_data_file
     )
     coldfront_fetch_proc.process()
 
@@ -384,6 +397,10 @@ def main():
         prepay_contacts=prepay_info,
     )
 
+    ocp_test_inv = ocp_test_invoice.OcpTestInvoice(
+        name=args.ocp_test_file, invoice_month=invoice_month, data=processed_data.copy()
+    )
+
     util.process_and_export_invoices(
         [
             lenovo_inv,
@@ -394,6 +411,7 @@ def main():
             pi_inv,
             moca_prepaid_inv,
             prepay_credits_snap,
+            ocp_test_inv,
         ],
         args.upload_to_s3,
     )
