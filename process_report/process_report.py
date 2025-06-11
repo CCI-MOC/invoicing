@@ -440,6 +440,8 @@ def merge_csv(files):
             dtype={
                 COST_FIELD: pandas.ArrowDtype(pyarrow.decimal128(12, 2)),
                 RATE_FIELD: str,
+                PI_FIELD: pandas.StringDtype(),
+                INSTITUTION_ID_FIELD: pandas.StringDtype(),
             },
         )
         dataframes.append(dataframe)

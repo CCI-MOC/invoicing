@@ -93,16 +93,19 @@ class PIInvoice(invoice.Invoice):
                 column_sums.append(pi_projects[column_name].sum())
                 sum_columns_list.append(column_name)
 
-        # Add a row with None values (this will convert int64 columns to float64 and bool to object)
-        pi_projects.loc[len(pi_projects)] = None
+        # Add totals row by copying the first row and modifying values
+        if not pi_projects.empty:
+            # Copying the first row and modifying values
+            totals_row = pi_projects.iloc[[0]].copy()
+            # Clear all values to empty strings
+            for col in totals_row.columns:
+                totals_row[col] = ""
 
-        # Set Invoice Month and totals - add Invoice Month column if it doesn't exist
-        if invoice.INVOICE_DATE_FIELD not in pi_projects.columns:
-            pi_projects[invoice.INVOICE_DATE_FIELD] = None
+            totals_row[invoice.INVOICE_DATE_FIELD] = "Total"
+            for col, sum_val in zip(sum_columns_list, column_sums):
+                totals_row[col] = sum_val
 
-        pi_projects.loc[pi_projects.index[-1], invoice.INVOICE_DATE_FIELD] = "Total"
-        for col, val in zip(sum_columns_list, column_sums):
-            pi_projects.loc[pi_projects.index[-1], col] = val
+            pi_projects = pandas.concat([pi_projects, totals_row], ignore_index=True)
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
@@ -111,7 +114,11 @@ class PIInvoice(invoice.Invoice):
                     lambda data: data if pandas.isna(data) else f"${data}"
                 )
 
-        pi_projects.fillna("", inplace=True)
+        # Convert to StringDtype for template compatibility before filling NA values
+        pi_projects = pi_projects.astype(pandas.StringDtype())
+
+        # Convert any remaining pandas NA values to empty strings for template compatibility
+        pi_projects = pi_projects.fillna("")
 
         return pi_projects
 
@@ -160,9 +167,6 @@ class PIInvoice(invoice.Invoice):
 
             pi_dataframe = self._get_pi_dataframe(self.export_data, pi)
             pi_instituition = pi_dataframe[invoice.INSTITUTION_FIELD].iat[0]
-
-            # Convert to StringDtype for HTML rendering
-            pi_dataframe = pi_dataframe.astype(pandas.StringDtype())
 
             with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as temp_fd:
                 _create_html_invoice(temp_fd)
