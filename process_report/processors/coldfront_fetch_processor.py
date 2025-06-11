@@ -116,6 +116,14 @@ class ColdfrontFetchProcessor(processor.Processor):
             )
 
     def _apply_allocation_data(self, allocation_data):
+        # Convert columns to string dtype to handle string values properly
+        if invoice.PI_FIELD in self.data.columns:
+            self.data[invoice.PI_FIELD] = self.data[invoice.PI_FIELD].astype("string")
+        if invoice.INSTITUTION_ID_FIELD in self.data.columns:
+            self.data[invoice.INSTITUTION_ID_FIELD] = self.data[
+                invoice.INSTITUTION_ID_FIELD
+            ].astype("string")
+
         for project_id, data in allocation_data.items():
             mask = self.data[invoice.PROJECT_ID_FIELD] == project_id
             self.data.loc[mask, invoice.PROJECT_FIELD] = data[invoice.PROJECT_FIELD]

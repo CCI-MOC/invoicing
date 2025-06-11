@@ -85,24 +85,28 @@ class PIInvoice(invoice.Invoice):
                 axis=1,
             )
 
-        # Add a row containing sums for certain columns
-        column_sums = []
-        sum_columns_list = []
+        # Create new row with proper dtypes instead of concatenating with None
+        # Calculate totals first
+        column_sums = {}
         for column_name in self.TOTAL_COLUMN_LIST:
             if column_name in pi_projects.columns:
-                column_sums.append(pi_projects[column_name].sum())
-                sum_columns_list.append(column_name)
+                column_sums[column_name] = pi_projects[column_name].sum()
 
-        # Add a row with None values (this will convert int64 columns to float64 and bool to object)
-        pi_projects.loc[len(pi_projects)] = None
+        # Use pandas.concat with future-compatible approach
+        # Create an empty row first, then populate it
+        pi_projects = pi_projects.copy()  # Ensure we have a copy
+        new_index = len(pi_projects)
+
+        # Add empty row by reindexing
+        pi_projects = pi_projects.reindex(range(len(pi_projects) + 1))
 
         # Set Invoice Month and totals - add Invoice Month column if it doesn't exist
         if invoice.INVOICE_DATE_FIELD not in pi_projects.columns:
-            pi_projects[invoice.INVOICE_DATE_FIELD] = None
+            pi_projects[invoice.INVOICE_DATE_FIELD] = ""
 
-        pi_projects.loc[pi_projects.index[-1], invoice.INVOICE_DATE_FIELD] = "Total"
-        for col, val in zip(sum_columns_list, column_sums):
-            pi_projects.loc[pi_projects.index[-1], col] = val
+        pi_projects.loc[new_index, invoice.INVOICE_DATE_FIELD] = "Total"
+        for col, val in column_sums.items():
+            pi_projects.loc[new_index, col] = val
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
@@ -111,7 +115,14 @@ class PIInvoice(invoice.Invoice):
                     lambda data: data if pandas.isna(data) else f"${data}"
                 )
 
-        pi_projects.fillna("", inplace=True)
+        # Fill NaN values selectively - only fill non-numeric columns with empty strings
+        # Keep numeric columns as they are to preserve their dtypes
+        for col in pi_projects.columns:
+            if not pandas.api.types.is_numeric_dtype(pi_projects[col]):
+                pi_projects[col] = pi_projects[col].fillna("")
+
+        # Convert any remaining pandas NA values to empty strings for template compatibility
+        pi_projects = pi_projects.fillna("")
 
         return pi_projects
 

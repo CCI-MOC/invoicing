@@ -51,9 +51,26 @@ class DiscountProcessor(processor.Processor):
             remaining_project_balance = project[pi_balance_field]
             applied_discount = min(remaining_project_balance, remaining_discount_amount)
             invoice.at[project_i, discount_field] = applied_discount
-            invoice.at[project_i, pi_balance_field] -= applied_discount
+
+            # Convert applied_discount to the same dtype as the balance columns
+            pi_balance_dtype = invoice[pi_balance_field].dtype
+            balance_dtype = invoice[balance_field].dtype
+
+            applied_discount_pi = applied_discount
+            if hasattr(applied_discount, "astype"):
+                applied_discount_pi = applied_discount.astype(pi_balance_dtype)
+            elif not isinstance(applied_discount, pi_balance_dtype.type):
+                applied_discount_pi = pi_balance_dtype.type(applied_discount)
+
+            applied_discount_balance = applied_discount
+            if hasattr(applied_discount, "astype"):
+                applied_discount_balance = applied_discount.astype(balance_dtype)
+            elif not isinstance(applied_discount, balance_dtype.type):
+                applied_discount_balance = balance_dtype.type(applied_discount)
+
+            invoice.at[project_i, pi_balance_field] -= applied_discount_pi
             if self.IS_DISCOUNT_BY_NERC:
-                invoice.at[project_i, balance_field] -= applied_discount
+                invoice.at[project_i, balance_field] -= applied_discount_balance
             remaining_discount_amount -= applied_discount
             return remaining_discount_amount
 
