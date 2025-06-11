@@ -69,6 +69,12 @@ class TestColdfrontFetchProcessor(TestCase):
             ["PI1", "PI1", "PI1", "", "PI12"],
             ["IC1", "IC1", "", "", "IC2"],
         )
+        # Convert columns to string dtype to match processor output
+        answer_invoice["Manager (PI)"] = answer_invoice["Manager (PI)"].astype("string")
+        answer_invoice["Institution - Specific Code"] = answer_invoice[
+            "Institution - Specific Code"
+        ].astype("string")
+
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice
         )
@@ -123,6 +129,12 @@ class TestColdfrontFetchProcessor(TestCase):
             ["IC1", "IC2", "", ""],
             ["ocp-prod", "stack", "ocp-test", "ocp-test"],
         )
+        # Convert columns to string dtype to match processor output
+        answer_invoice["Manager (PI)"] = answer_invoice["Manager (PI)"].astype("string")
+        answer_invoice["Institution - Specific Code"] = answer_invoice[
+            "Institution - Specific Code"
+        ].astype("string")
+
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice
         )
