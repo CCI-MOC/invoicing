@@ -17,6 +17,7 @@ from process_report.processors import (
     new_pi_credit_processor,
     bu_subsidy_processor,
     prepayment_processor,
+    validate_cluster_name_processor,
 )
 
 
@@ -219,4 +220,14 @@ def new_prepay_credits_snapshot(
 ):
     return prepay_credits_snapshot.PrepayCreditsSnapshot(
         name, invoice_month, data, prepay_credits, prepay_contacts
+    )
+
+
+def new_validate_cluster_name_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    return validate_cluster_name_processor.ValidateClusterNameProcessor(
+        name, invoice_month, data
     )
