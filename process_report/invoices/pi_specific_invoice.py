@@ -105,6 +105,9 @@ class PIInvoice(invoice.Invoice):
                     lambda data: data if pandas.isna(data) else f"${data}"
                 )
 
+        pi_projects = pi_projects.astype(
+            invoice.STRING_FIELD_TYPE
+        )  # Prevents TypeError with Pandas dtypes
         pi_projects.fillna("", inplace=True)
 
         return pi_projects
