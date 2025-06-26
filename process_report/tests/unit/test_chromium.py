@@ -42,7 +42,12 @@ class TestPIInvoiceExport(BaseTestCaseWithTempDir):
 
     def test_pi_invoice_pdf_generation(self):
         pi_invoice = PIInvoice(
-            name=self.tempdir, invoice_month=self.invoice_month, data=self.df
+            name=self.tempdir,
+            invoice_month=self.invoice_month,
+            data=self.df,
+            chrome_binary_location=os.environ.get(
+                "CHROME_BIN_PATH", "/usr/bin/chromium"
+            ),
         )
         pi_invoice.process()
         pi_invoice.export()

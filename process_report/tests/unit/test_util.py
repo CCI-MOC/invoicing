@@ -108,16 +108,21 @@ class TestTimedProjects(TestCase):
 
 class TestValidateRequiredEnvVars(TestCase):
     @mock.patch.dict(
-        "os.environ", {"KEYCLOAK_CLIENT_ID": "test", "KEYCLOAK_CLIENT_SECRET": "test"}
+        "os.environ",
+        {
+            "KEYCLOAK_CLIENT_ID": "test",
+            "KEYCLOAK_CLIENT_SECRET": "test",
+            "CHROME_BIN_PATH": "test/path",
+        },
     )
     def test_env_vars_valid(self):
         process_report.validate_required_env_vars(
-            ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"]
+            ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET", "CHROME_BIN_PATH"]
         )
 
     @mock.patch.dict("os.environ", {"KEYCLOAK_CLIENT_ID": "test"})
     def test_env_vars_missing(self):
         with self.assertRaises(SystemExit):
             process_report.validate_required_env_vars(
-                ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"]
+                ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET", "CHROME_BIN_PATH"]
             )

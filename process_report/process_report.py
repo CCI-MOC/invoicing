@@ -242,8 +242,12 @@ def main():
 
     required_env_vars = []
     if not args.coldfront_data_file:
-        required_env_vars.extend(["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"])
+        required_env_vars.extend(
+            ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET", "CHROME_BIN_PATH"]
+        )
     validate_required_env_vars(required_env_vars)
+
+    chrome_binary_location = os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium")
 
     invoice_month = args.invoice_month
 
@@ -382,7 +386,10 @@ def main():
     )
 
     pi_inv = pi_specific_invoice.PIInvoice(
-        name=args.output_folder, invoice_month=invoice_month, data=processed_data
+        name=args.output_folder,
+        invoice_month=invoice_month,
+        data=processed_data,
+        chrome_binary_location=chrome_binary_location,
     )
 
     moca_prepaid_inv = MOCA_prepaid_invoice.MOCAPrepaidInvoice(
