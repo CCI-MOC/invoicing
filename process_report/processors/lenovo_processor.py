@@ -7,10 +7,18 @@ from process_report.processors import processor
 
 @dataclass
 class LenovoProcessor(processor.Processor):
-    SU_CHARGE_MULTIPLIER = 1
+    su_charge_info: dict
+
+    def _apply_su_charge(self, data):
+        for su_name, su_charge in self.su_charge_info.items():
+            if su_name in data:
+                return su_charge
+        return 0
 
     def _process(self):
-        self.data[invoice.SU_CHARGE_FIELD] = self.SU_CHARGE_MULTIPLIER
+        self.data[invoice.SU_CHARGE_FIELD] = self.data[invoice.SU_TYPE_FIELD].apply(
+            self._apply_su_charge
+        )
         self.data[invoice.LENOVO_CHARGE_FIELD] = (
             self.data[invoice.SU_HOURS_FIELD] * self.data[invoice.SU_CHARGE_FIELD]
         )

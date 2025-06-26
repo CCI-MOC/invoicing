@@ -120,10 +120,14 @@ def new_validate_pi_alias_processor(
     )
 
 
-def new_lenovo_processor(name="", invoice_month="0000-00", data=None):
+def new_lenovo_processor(
+    name="", invoice_month="0000-00", data=None, su_charge_info=None
+):
     if data is None:
         data = pandas.DataFrame()
-    return lenovo_processor.LenovoProcessor(name, invoice_month, data)
+    if su_charge_info is None:
+        su_charge_info = {}
+    return lenovo_processor.LenovoProcessor(name, invoice_month, data, su_charge_info)
 
 
 def new_validate_billable_pi_processor(

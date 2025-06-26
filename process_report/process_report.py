@@ -263,6 +263,7 @@ def main():
     prepay_credits, prepay_projects, prepay_info = load_prepay_csv(
         args.prepay_credits, args.prepay_projects, args.prepay_contacts
     )
+    lenovo_su_charge_info = get_lenovo_su_charge_info(invoice_month, rates_info)
 
     merged_dataframe = merge_csv(csv_files)
 
@@ -299,7 +300,7 @@ def main():
     add_institute_proc.process()
 
     lenovo_proc = lenovo_processor.LenovoProcessor(
-        "", invoice_month, add_institute_proc.data
+        "", invoice_month, add_institute_proc.data, lenovo_su_charge_info
     )
     lenovo_proc.process()
 
@@ -483,6 +484,15 @@ def backup_to_s3_old_pi_file(old_pi_file):
 
 def export_billables(dataframe, output_file):
     dataframe.to_csv(output_file, index=False)
+
+
+def get_lenovo_su_charge_info(invoice_month, rates_info):
+    su_charge_info = {}
+    for su_name in ["GPUA100SXM4", "GPUH100"]:
+        su_charge_info[su_name] = rates_info.get_value_at(
+            f"Lenovo {su_name} Charge", invoice_month, Decimal
+        )
+    return su_charge_info
 
 
 if __name__ == "__main__":
