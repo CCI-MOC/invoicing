@@ -30,6 +30,7 @@ from process_report.processors import (
     new_pi_credit_processor,
     bu_subsidy_processor,
     prepayment_processor,
+    validate_cluster_name_processor,
 )
 
 ### PI file field names
@@ -282,6 +283,13 @@ def main():
     projects = list(set(projects + timed_projects_list))
 
     ### Preliminary processing
+
+    validate_cluster_name_proc = (
+        validate_cluster_name_processor.ValidateClusterNameProcessor(
+            "", invoice_month, merged_dataframe
+        )
+    )
+    validate_cluster_name_proc.process()
 
     coldfront_fetch_proc = coldfront_fetch_processor.ColdfrontFetchProcessor(
         "", invoice_month, merged_dataframe, projects, args.coldfront_data_file
