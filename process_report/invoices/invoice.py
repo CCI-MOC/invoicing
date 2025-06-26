@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pandas
+import pyarrow
 
 import process_report.util as util
 
@@ -58,6 +59,12 @@ GROUP_MANAGED_FIELD = "MGHPCC Managed"
 CLUSTER_NAME_FIELD = "Cluster Name"
 ###
 
+### Invoice column types
+BALANCE_FIELD_TYPE = pandas.ArrowDtype(pyarrow.decimal128(21, 2))
+STRING_FIELD_TYPE = pandas.StringDtype()
+BOOL_FIELD_TYPE = pandas.BooleanDtype()
+###
+
 
 @dataclass
 class Invoice:
@@ -109,6 +116,12 @@ class Invoice:
         Implement in subclass if necessary. May add or remove columns or rows
         that should or should not be exported after processing."""
         pass
+
+    def _create_column(self, column_name, column_type, value):
+        """Creates a new column in `self.data` with type and value."""
+        self.data[column_name] = pandas.Series(
+            [value] * len(self.data), dtype=column_type
+        )
 
     def _filter_columns(self):
         """Filters and renames columns before exporting"""

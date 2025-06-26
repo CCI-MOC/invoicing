@@ -1,28 +1,18 @@
-from unittest import TestCase, mock
-import pandas
+from unittest import mock
 
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 from process_report.institute_list_models import InstituteList
 
 
-class TestNERCTotalInvoice(TestCase):
+class TestNERCTotalInvoice(base.BaseTestCase):
     def _get_test_invoice(
         self,
         institutions,
-        is_billable=None,
-        missing_pi=None,
-        group_managed=None,
+        is_billable=True,
+        missing_pi=False,
+        group_managed=True,
     ):
-        if not is_billable:
-            is_billable = [True for _ in range(len(institutions))]
-
-        if not missing_pi:
-            missing_pi = [False for _ in range(len(institutions))]
-
-        if not group_managed:
-            group_managed = [True for _ in range(len(institutions))]
-
-        return pandas.DataFrame(
+        return self._create_test_invoice(
             {
                 "Institution": institutions,
                 "Is Billable": is_billable,

@@ -1,18 +1,15 @@
-from unittest import TestCase
-import pandas
-
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestValidateAliasProcessor(TestCase):
+class TestValidateAliasProcessor(base.BaseTestCase):
     def test_validate_alias(self):
         alias_map = {"PI1": ["PI1_1", "PI1_2"], "PI2": ["PI2_1"]}
-        test_data = pandas.DataFrame(
+        test_data = self._create_test_invoice(
             {
                 "Manager (PI)": ["PI1", "PI1_1", "PI1_2", "PI2_1", "PI2_1"],
             }
         )
-        answer_data = pandas.DataFrame(
+        answer_data = self._create_test_invoice(
             {
                 "Manager (PI)": ["PI1", "PI1", "PI1", "PI2", "PI2"],
             }
