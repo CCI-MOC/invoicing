@@ -4,7 +4,7 @@ import pandas
 import os
 from textwrap import dedent
 
-from process_report import process_report, util
+from process_report import process_report, util, config
 
 
 class TestMonthUtils(TestCase):
@@ -98,7 +98,7 @@ class TestTimedProjects(TestCase):
         os.remove(self.csv_file.name)
 
     def test_timed_projects(self):
-        excluded_projects = process_report.timed_projects(
+        excluded_projects = config.get_nonbillable_timed_projects(
             self.csv_file.name, self.invoice_date
         )
 

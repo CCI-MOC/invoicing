@@ -28,7 +28,7 @@ def new_base_invoice(
 ):
     if data is None:
         data = pandas.DataFrame()
-    return invoice.Invoice(name, invoice_month, data)
+    return invoice.Invoice(invoice_month, data, name)
 
 
 def new_billable_invoice(
@@ -47,9 +47,9 @@ def new_billable_invoice(
     if nonbillable_projects is None:
         nonbillable_projects = []
     return billable_invoice.BillableInvoice(
-        name,
         invoice_month,
         data,
+        name,
         old_pi_filepath,
         updated_old_pi_df,
     )
@@ -63,9 +63,9 @@ def new_pi_specific_invoice(
     if data is None:
         data = pandas.DataFrame()
     return pi_specific_invoice.PIInvoice(
-        name,
         invoice_month,
         data,
+        name,
     )
 
 
@@ -77,9 +77,9 @@ def new_nerc_total_invoice(
     if data is None:
         data = pandas.DataFrame()
     return NERC_total_invoice.NERCTotalInvoice(
-        name,
         invoice_month,
         data,
+        name,
     )
 
 
@@ -95,7 +95,7 @@ def new_coldfront_fetch_processor(
     if nonbillable_projects is None:
         nonbillable_projects = []
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
-        name, invoice_month, data, nonbillable_projects, coldfront_data_filepath
+        invoice_month, data, name, nonbillable_projects, coldfront_data_filepath
     )
 
 
@@ -106,7 +106,7 @@ def new_add_institution_processor(
 ):
     if data is None:
         data = pandas.DataFrame()
-    return add_institution_processor.AddInstitutionProcessor(name, invoice_month, data)
+    return add_institution_processor.AddInstitutionProcessor(invoice_month, data, name)
 
 
 def new_validate_pi_alias_processor(
@@ -117,7 +117,7 @@ def new_validate_pi_alias_processor(
     if alias_map is None:
         alias_map = {}
     return validate_pi_alias_processor.ValidatePIAliasProcessor(
-        name, invoice_month, data, alias_map
+        invoice_month, data, name, alias_map
     )
 
 
@@ -128,7 +128,7 @@ def new_lenovo_processor(
         data = pandas.DataFrame()
     if su_charge_info is None:
         su_charge_info = {}
-    return lenovo_processor.LenovoProcessor(name, invoice_month, data, su_charge_info)
+    return lenovo_processor.LenovoProcessor(invoice_month, data, name, su_charge_info)
 
 
 def new_validate_billable_pi_processor(
@@ -146,9 +146,9 @@ def new_validate_billable_pi_processor(
         nonbillable_projects = []
 
     return validate_billable_pi_processor.ValidateBillablePIsProcessor(
-        name,
         invoice_month,
         data,
+        name,
         nonbillable_pis,
         nonbillable_projects,
     )
@@ -161,16 +161,18 @@ def new_new_pi_credit_processor(
     old_pi_filepath="",
     credit_amount=1000,
     limit_new_pi_credit_to_partners=False,
+    upload_to_s3=False,
 ):
     if data is None:
         data = pandas.DataFrame()
     return new_pi_credit_processor.NewPICreditProcessor(
-        name,
         invoice_month,
         data,
+        name,
         old_pi_filepath,
         credit_amount,
         limit_new_pi_credit_to_partners,
+        upload_to_s3,
     )
 
 
@@ -183,7 +185,7 @@ def new_bu_subsidy_processor(
     if data is None:
         data = pandas.DataFrame()
     return bu_subsidy_processor.BUSubsidyProcessor(
-        name, invoice_month, data, subsidy_amount
+        invoice_month, data, name, subsidy_amount
     )
 
 
@@ -204,9 +206,9 @@ def new_prepayment_processor(
     if prepay_contacts is None:
         prepay_contacts = pandas.DataFrame()
     return prepayment_processor.PrepaymentProcessor(
-        name,
         invoice_month,
         data,
+        name,
         prepay_credits,
         prepay_projects,
         prepay_contacts,
@@ -223,7 +225,7 @@ def new_prepay_credits_snapshot(
     prepay_contacts=None,
 ):
     return prepay_credits_snapshot.PrepayCreditsSnapshot(
-        name, invoice_month, data, prepay_credits, prepay_contacts
+        invoice_month, data, name, prepay_credits, prepay_contacts
     )
 
 
@@ -233,5 +235,5 @@ def new_validate_cluster_name_processor(
     data=None,
 ):
     return validate_cluster_name_processor.ValidateClusterNameProcessor(
-        name, invoice_month, data
+        invoice_month, data, name
     )
