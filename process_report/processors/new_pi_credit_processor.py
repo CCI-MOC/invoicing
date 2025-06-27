@@ -1,10 +1,12 @@
 import sys
 import logging
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pandas
 import pyarrow
 
+from process_report.settings import invoice_settings
+from process_report.loader import loader
 from process_report import util
 from process_report.invoices import invoice
 from process_report.processors import discount_processor
@@ -21,13 +23,22 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     - ValidateBillablePIsProcessor
     """
 
+    PI_S3_FILEPATH = "PIs/PI.csv"
+    PI_S3_BACKUP_FILEPATH = f"PIs/Archive/PI {util.get_iso8601_time()}.csv"
     NEW_PI_CREDIT_CODE = "0002"
     EXCLUDE_SU_TYPES = ["OpenShift GPUA100SXM4", "OpenStack GPUA100SXM4"]
     IS_DISCOUNT_BY_NERC = True
 
-    old_pi_filepath: str
-    initial_credit_amount: int
-    limit_new_pi_credit_to_partners: bool = False
+    old_pi_filepath: str = field(
+        default_factory=lambda: loader.get_remote_filepath(
+            invoice_settings.pi_remote_filepath
+        )
+    )
+    initial_credit_amount: int = field(default_factory=loader.get_new_pi_credit_amount)
+    limit_new_pi_credit_to_partners: bool = field(
+        default_factory=loader.get_limit_new_pi_credit_to_partners
+    )
+    upload_to_s3: bool = invoice_settings.upload_to_s3
 
     @staticmethod
     def _load_old_pis(old_pi_filepath) -> pandas.DataFrame:
@@ -193,3 +204,17 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         self.data, self.updated_old_pi_df = self._apply_credits_new_pi(
             self.data, self.old_pi_df
         )
+        self._export_updated_old_pi_file()
+        if self.upload_to_s3:
+            self.s3_bucket = util.get_invoice_bucket()
+            self._export_s3_updated_old_pi_file()
+            self._backup_s3_updated_old_pi_file()
+
+    def _export_updated_old_pi_file(self):
+        self.updated_old_pi_df.to_csv(self.old_pi_filepath, index=False)
+
+    def _export_s3_updated_old_pi_file(self):
+        self.s3_bucket.upload_file(self.old_pi_filepath, self.PI_S3_FILEPATH)
+
+    def _backup_s3_updated_old_pi_file(self):
+        self.s3_bucket.upload_file(self.old_pi_filepath, self.PI_S3_BACKUP_FILEPATH)

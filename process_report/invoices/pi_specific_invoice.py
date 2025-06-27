@@ -43,6 +43,8 @@ class PIInvoice(invoice.Invoice):
         invoice.BALANCE_FIELD,
     ]
 
+    name: str = "pi_invoices"
+
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
