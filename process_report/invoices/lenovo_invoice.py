@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from process_report.config import LENOVO_INVOICE_NAME
 import process_report.invoices.invoice as invoice
 
 
@@ -7,6 +8,7 @@ import process_report.invoices.invoice as invoice
 class LenovoInvoice(invoice.Invoice):
     LENOVO_SU_TYPES = ["OpenShift GPUA100SXM4", "OpenStack GPUA100SXM4"]
 
+    name = LENOVO_INVOICE_NAME
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
