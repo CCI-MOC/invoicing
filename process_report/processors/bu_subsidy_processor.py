@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from decimal import Decimal
 
+from process_report import config
 from process_report.invoices import invoice
 from process_report.processors import discount_processor
 
@@ -9,7 +10,7 @@ from process_report.processors import discount_processor
 class BUSubsidyProcessor(discount_processor.DiscountProcessor):
     IS_DISCOUNT_BY_NERC = False
 
-    subsidy_amount: int
+    subsidy_amount = config.BU_SUBSIDY_AMOUNT
 
     def _prepare(self):
         def get_project(row):

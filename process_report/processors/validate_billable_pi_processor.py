@@ -3,6 +3,7 @@ import logging
 
 import pandas
 
+from process_report import config
 from process_report.invoices import invoice
 from process_report.processors import processor
 
@@ -22,8 +23,8 @@ class ValidateBillablePIsProcessor(processor.Processor):
     Every project belonging to ocp-test is nonbillable.
     """
 
-    nonbillable_pis: list[str]
-    nonbillable_projects: list[str]
+    nonbillable_pis = config.get_nonbillable_pis()
+    nonbillable_projects = config.get_nonbillable_projects()
 
     @staticmethod
     def _validate_pi_names(data: pandas.DataFrame):
