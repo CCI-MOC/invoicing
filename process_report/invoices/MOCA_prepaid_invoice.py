@@ -3,6 +3,7 @@ import process_report.util as util
 
 
 class MOCAPrepaidInvoice(invoice.Invoice):
+    name: str = ""
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

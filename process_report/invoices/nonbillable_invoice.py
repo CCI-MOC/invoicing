@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 
+from process_report.config import config
 import process_report.invoices.invoice as invoice
 
 
 @dataclass
 class NonbillableInvoice(invoice.Invoice):
-    nonbillable_pis: list[str]
-    nonbillable_projects: list[str]
-
+    name: str = config.NONBILLABLE_INVOICE_NAME
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

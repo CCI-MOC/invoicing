@@ -4,6 +4,7 @@ import pandas
 import os
 from textwrap import dedent
 
+from process_report.config import config
 from process_report import process_report, util
 
 
@@ -88,19 +89,19 @@ class TestTimedProjects(TestCase):
         ProjectD,2022-09,2024-08
         """
         )
-        self.invoice_date = pandas.Timestamp("2023-09")
 
         self.csv_file = tempfile.NamedTemporaryFile(delete=False, mode="w")
         self.csv_file.write(self.csv_data)
         self.csv_file.close()
 
+        config.INVOICE_MONTH = pandas.Timestamp("2023-09")
+        config.NONBILLABLE_TIMED_PROECTS_FILEPATH = self.csv_file.name
+
     def tearDown(self):
         os.remove(self.csv_file.name)
 
     def test_timed_projects(self):
-        excluded_projects = process_report.timed_projects(
-            self.csv_file.name, self.invoice_date
-        )
+        excluded_projects = config.get_nonbillable_timed_projects()
 
         expected_projects = ["ProjectB", "ProjectC", "ProjectD"]
         self.assertEqual(excluded_projects, expected_projects)
