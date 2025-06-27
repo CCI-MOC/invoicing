@@ -3,10 +3,11 @@ import sys
 import functools
 import logging
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import requests
 
+from process_report import config
 from process_report.invoices import invoice
 from process_report.processors import processor, validate_billable_pi_processor
 
@@ -21,8 +22,10 @@ CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
-    nonbillable_projects: list[str]
-    coldfront_data_filepath: str
+    nonbillable_projects: list[str] = field(
+        default_factory=config.get_nonbillable_projects
+    )
+    coldfront_data_filepath: str = config.COLDFRONT_API_FILEPATH
 
     @functools.cached_property
     def coldfront_client(self):
