@@ -1,39 +1,30 @@
 import tempfile
-from unittest import TestCase, mock
+from unittest import mock
 import pandas
 
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestPISpecificInvoice(TestCase):
+class TestPISpecificInvoice(base.BaseTestCase):
     def _get_test_invoice(
         self,
         pi,
         institution,
         balance,
-        is_billable=None,
-        missing_pi=None,
+        is_billable=True,
+        missing_pi=False,
         group_name=None,
     ):
-        if not is_billable:
-            is_billable = [True] * len(pi)
-
-        if not missing_pi:
-            missing_pi = [False] * len(pi)
-
-        if not group_name:
-            group_name = [None] * len(pi)
-
-        return pandas.DataFrame(
+        return self._create_test_invoice(
             {
                 "Manager (PI)": pi,
                 "Institution": institution,
                 "Is Billable": is_billable,
                 "Missing PI": missing_pi,
                 "Prepaid Group Name": group_name,
-                "Prepaid Group Institution": ["" for _ in range(len(pi))],
-                "Prepaid Group Balance": [0 for _ in range(len(pi))],
-                "Prepaid Group Used": [0 for _ in range(len(pi))],
+                "Prepaid Group Institution": "",
+                "Prepaid Group Balance": 0,
+                "Prepaid Group Used": 0,
                 "Balance": balance,
             }
         )
@@ -73,6 +64,7 @@ class TestPISpecificInvoice(TestCase):
             answer_invoice_pi1[column_name] = answer_invoice_pi1[column_name].apply(
                 add_dollar_sign
             )
+        answer_invoice_pi1 = answer_invoice_pi1.astype(base.STRING_FIELD_TYPE)
         answer_invoice_pi1.fillna("", inplace=True)
 
         answer_invoice_pi2 = (
@@ -96,6 +88,8 @@ class TestPISpecificInvoice(TestCase):
         answer_invoice_pi2["Balance"] = answer_invoice_pi2["Balance"].apply(
             add_dollar_sign
         )
+
+        answer_invoice_pi2 = answer_invoice_pi2.astype(base.STRING_FIELD_TYPE)
         answer_invoice_pi2.fillna("", inplace=True)
 
         pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)

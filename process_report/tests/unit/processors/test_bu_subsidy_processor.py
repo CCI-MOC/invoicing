@@ -1,10 +1,7 @@
-from unittest import TestCase
-import pandas
-
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestBUSubsidyProcessor(TestCase):
+class TestBUSubsidyProcessor(base.BaseTestCase):
     def _assert_result_invoice(
         self,
         subsidy_amount,
@@ -28,27 +25,15 @@ class TestBUSubsidyProcessor(TestCase):
         pi,
         pi_balances,
         balances=None,
-        project_names=None,
-        institution=None,
-        is_billable=None,
-        missing_pi=None,
+        project_names="Project",
+        institution="Boston University",
+        is_billable=True,
+        missing_pi=False,
     ):
         if not balances:
             balances = pi_balances
 
-        if not project_names:
-            project_names = ["Project" for _ in range(len(pi))]
-
-        if not institution:
-            institution = ["Boston University" for _ in range(len(pi))]
-
-        if not is_billable:
-            is_billable = [True for _ in range(len(pi))]
-
-        if not missing_pi:
-            missing_pi = [False for _ in range(len(pi))]
-
-        return pandas.DataFrame(
+        return self._create_test_invoice(
             {
                 "Manager (PI)": pi,
                 "Project - Allocation": project_names,

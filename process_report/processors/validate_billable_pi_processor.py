@@ -56,7 +56,15 @@ class ValidateBillablePIsProcessor(processor.Processor):
         )
 
     def _process(self):
-        self.data[invoice.IS_BILLABLE_FIELD] = self._get_billables(
-            self.data, self.nonbillable_pis, self.nonbillable_projects
+        self._create_column(
+            invoice.IS_BILLABLE_FIELD,
+            invoice.BOOL_FIELD_TYPE,
+            self._get_billables(
+                self.data, self.nonbillable_pis, self.nonbillable_projects
+            ),
         )
-        self.data[invoice.MISSING_PI_FIELD] = self._validate_pi_names(self.data)
+        self._create_column(
+            invoice.MISSING_PI_FIELD,
+            invoice.BOOL_FIELD_TYPE,
+            self._validate_pi_names(self.data),
+        )

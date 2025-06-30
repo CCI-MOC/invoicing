@@ -183,10 +183,26 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         return (data, old_pi_df)
 
     def _prepare(self):
-        self.data[invoice.CREDIT_FIELD] = None
-        self.data[invoice.CREDIT_CODE_FIELD] = None
-        self.data[invoice.PI_BALANCE_FIELD] = self.data[invoice.COST_FIELD]
-        self.data[invoice.BALANCE_FIELD] = self.data[invoice.COST_FIELD]
+        self._create_column(
+            invoice.CREDIT_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.CREDIT_CODE_FIELD,
+            invoice.STRING_FIELD_TYPE,
+            None,
+        )
+        self._create_column(
+            invoice.PI_BALANCE_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            self.data[invoice.COST_FIELD],
+        )
+        self._create_column(
+            invoice.BALANCE_FIELD,
+            invoice.BALANCE_FIELD_TYPE,
+            self.data[invoice.COST_FIELD],
+        )
         self.old_pi_df = self._load_old_pis(self.old_pi_filepath)
 
     def _process(self):

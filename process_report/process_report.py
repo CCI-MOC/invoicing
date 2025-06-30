@@ -6,11 +6,11 @@ from decimal import Decimal
 import os
 
 import pandas
-import pyarrow
 from nerc_rates import load_from_url
 
 from process_report import util
 from process_report.invoices import (
+    invoice,
     lenovo_invoice,
     nonbillable_invoice,
     billable_invoice,
@@ -446,8 +446,8 @@ def merge_csv(files):
         dataframe = pandas.read_csv(
             file,
             dtype={
-                COST_FIELD: pandas.ArrowDtype(pyarrow.decimal128(12, 2)),
-                RATE_FIELD: str,
+                COST_FIELD: invoice.BALANCE_FIELD_TYPE,
+                RATE_FIELD: invoice.STRING_FIELD_TYPE,
             },
         )
         dataframes.append(dataframe)

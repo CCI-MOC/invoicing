@@ -1,10 +1,10 @@
 from unittest import TestCase, mock
 import pandas
 
-from process_report.tests import util as test_utils
+from process_report.tests import base, util as test_utils
 
 
-class TestBaseInvoice(TestCase):
+class TestBaseInvoice(base.BaseTestCase):
     def test_filter_exported_columns(self):
         test_invoice = pandas.DataFrame(columns=["C1", "C2", "C3", "C4", "C5"])
         answer_invoice = pandas.DataFrame(columns=["C1", "C3R", "C5R"])
@@ -16,6 +16,20 @@ class TestBaseInvoice(TestCase):
         result_invoice = inv.export_data
 
         self.assertTrue(result_invoice.equals(answer_invoice))
+
+    def test_create_column(self):
+        test_invoice = self._create_test_invoice({"Col1": [1, 2], "Col2": [3, 4]})
+        answer_invoice = test_invoice.copy()
+        answer_invoice["Col3"] = "default"
+        answer_invoice["Col4"] = 10.0
+        answer_invoice["Col3"] = answer_invoice["Col3"].astype(base.STRING_FIELD_TYPE)
+        answer_invoice["Col4"] = answer_invoice["Col4"].astype(base.BALANCE_FIELD_TYPE)
+
+        inv = test_utils.new_base_invoice(data=test_invoice)
+        inv._create_column("Col3", base.STRING_FIELD_TYPE, "default")
+        inv._create_column("Col4", base.BALANCE_FIELD_TYPE, 10.0)
+
+        self.assertTrue(inv.data.equals(answer_invoice))
 
 
 class TestUploadToS3(TestCase):

@@ -84,18 +84,9 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         self.assertTrue(output_old_pi_df.equals(answer_old_pi_df))
 
     def _get_test_invoice(
-        self, pi, cost, su_type=None, is_billable=None, missing_pi=None
+        self, pi, cost, su_type="CPU", is_billable=True, missing_pi=False
     ):
-        if not su_type:
-            su_type = ["CPU" for _ in range(len(pi))]
-
-        if not is_billable:
-            is_billable = [True for _ in range(len(pi))]
-
-        if not missing_pi:
-            missing_pi = [False for _ in range(len(pi))]
-
-        return pandas.DataFrame(
+        return self._create_test_invoice(
             {
                 "Manager (PI)": pi,
                 "Cost": cost,
