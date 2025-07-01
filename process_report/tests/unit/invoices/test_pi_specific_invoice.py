@@ -1,6 +1,7 @@
 import tempfile
 from unittest import TestCase, mock
 import pandas
+import warnings
 
 from process_report.tests import util as test_utils
 
@@ -40,8 +41,8 @@ class TestPISpecificInvoice(TestCase):
 
     def test_get_pi_dataframe(self):
         def add_dollar_sign(data):
-            if pandas.isna(data):
-                return data
+            if pandas.isna(data) or data == "":
+                return "$" if data == "" else data
             else:
                 return "$" + str(data)
 
@@ -56,15 +57,24 @@ class TestPISpecificInvoice(TestCase):
             [100, 200, 300, 400],
             group_name=[None, "G1", None, None],
         )
+
+        # Expected result for PI1 - build using the new approach
         answer_invoice_pi1 = (
             test_invoice[test_invoice["Manager (PI)"] == "PI1"]
             .copy()
             .reset_index(drop=True)
         )
-        answer_invoice_pi1.loc[len(answer_invoice_pi1)] = None
-        answer_invoice_pi1.loc[
-            answer_invoice_pi1.index[-1], ["Invoice Month", "Balance"]
-        ] = ["Total", 300]
+        # Create totals row by copying first row and modifying
+        totals_row = answer_invoice_pi1.iloc[[0]].copy()
+        for col in totals_row.columns:
+            totals_row[col] = ""
+        totals_row["Invoice Month"] = "Total"
+        totals_row["Balance"] = 300
+        answer_invoice_pi1 = pandas.concat(
+            [answer_invoice_pi1, totals_row], ignore_index=True
+        )
+
+        # Apply dollar formatting
         for column_name in [
             "Prepaid Group Balance",
             "Prepaid Group Used",
@@ -73,17 +83,26 @@ class TestPISpecificInvoice(TestCase):
             answer_invoice_pi1[column_name] = answer_invoice_pi1[column_name].apply(
                 add_dollar_sign
             )
+        answer_invoice_pi1 = answer_invoice_pi1.astype(pandas.StringDtype())
         answer_invoice_pi1.fillna("", inplace=True)
 
+        # Expected result for PI2 - build using the new approach
         answer_invoice_pi2 = (
             test_invoice[test_invoice["Manager (PI)"] == "PI2"]
             .copy()
             .reset_index(drop=True)
         )
-        answer_invoice_pi2.loc[len(answer_invoice_pi2)] = None
-        answer_invoice_pi2.loc[
-            answer_invoice_pi2.index[-1], ["Invoice Month", "Balance"]
-        ] = ["Total", 700]
+        # Create totals row by copying first row and modifying
+        totals_row = answer_invoice_pi2.iloc[[0]].copy()
+        for col in totals_row.columns:
+            totals_row[col] = ""
+        totals_row["Invoice Month"] = "Total"
+        totals_row["Balance"] = 700
+        answer_invoice_pi2 = pandas.concat(
+            [answer_invoice_pi2, totals_row], ignore_index=True
+        )
+
+        # Drop prepay columns (they're all NA for PI2)
         answer_invoice_pi2 = answer_invoice_pi2.drop(
             [
                 "Prepaid Group Name",
@@ -96,6 +115,7 @@ class TestPISpecificInvoice(TestCase):
         answer_invoice_pi2["Balance"] = answer_invoice_pi2["Balance"].apply(
             add_dollar_sign
         )
+        answer_invoice_pi2 = answer_invoice_pi2.astype(pandas.StringDtype())
         answer_invoice_pi2.fillna("", inplace=True)
 
         pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
@@ -144,3 +164,26 @@ class TestPISpecificInvoice(TestCase):
                     "--no-pdf-header-footer",
                 ]
                 self.assertTrue(answer_arglist == chrome_arglist[0][:-1])
+
+    def test_process_no_warnings(self):
+        """Test that no warnings are raised during invoice processing"""
+        test_invoice = self._get_test_invoice(
+            ["PI1", "PI1", "PI2", "PI2"],
+            ["BU", "BU", "HU", "HU"],
+            [100, 200, 300, 400],
+            group_name=[None, "G1", None, None],
+        )
+
+        pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
+
+        # Capture all warnings
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            pi_inv.process()
+
+            # Assert no warnings were raised
+            self.assertEqual(
+                len(w),
+                0,
+                f"Unexpected warnings raised: {[str(warning.message) for warning in w]}",
+            )
