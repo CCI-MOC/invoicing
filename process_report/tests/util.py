@@ -56,17 +56,11 @@ def new_billable_invoice(
 
 
 def new_pi_specific_invoice(
-    name="",
-    invoice_month="0000-00",
-    data=None,
+    name="", invoice_month="0000-00", data=None, chrome_binary_path="/usr/bin/chromium"
 ):
     if data is None:
         data = pandas.DataFrame()
-    return pi_specific_invoice.PIInvoice(
-        name,
-        invoice_month,
-        data,
-    )
+    return pi_specific_invoice.PIInvoice(name, invoice_month, data, chrome_binary_path)
 
 
 def new_nerc_total_invoice(
