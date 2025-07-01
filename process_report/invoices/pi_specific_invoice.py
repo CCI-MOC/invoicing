@@ -1,15 +1,11 @@
 import os
-import sys
 from dataclasses import dataclass
-import subprocess
 import tempfile
 import logging
 
 import pandas
-from jinja2 import Environment, FileSystemLoader
 
-import process_report.invoices.invoice as invoice
-import process_report.util as util
+from process_report.invoices import invoice, pdf_invoice
 
 
 TEMPLATE_DIR_PATH = "process_report/templates"
@@ -20,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
-class PIInvoice(invoice.Invoice):
+class PIInvoice(pdf_invoice.PDFInvoice):
     """
     This invoice operates on data processed by these Processors:
     - ValidateBillablePIsProcessor
@@ -110,39 +106,6 @@ class PIInvoice(invoice.Invoice):
         return pi_projects
 
     def export(self):
-        def _create_html_invoice(temp_fd):
-            environment = Environment(loader=FileSystemLoader(TEMPLATE_DIR_PATH))
-            template = environment.get_template("pi_invoice.html")
-            content = template.render(
-                data=pi_dataframe,
-            )
-            temp_fd.write(content)
-            temp_fd.flush()
-
-        def _create_pdf_invoice(temp_fd_name):
-            chrome_binary_location = os.environ.get(
-                "CHROME_BIN_PATH", "/usr/bin/chromium"
-            )
-            if not os.path.exists(chrome_binary_location):
-                sys.exit(
-                    f"Chrome binary does not exist at {chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
-                )
-
-            invoice_pdf_path = (
-                f"{self.name}/{pi_instituition}_{pi}_{self.invoice_month}.pdf"
-            )
-            subprocess.run(
-                [
-                    chrome_binary_location,
-                    "--headless",
-                    "--no-sandbox",
-                    f"--print-to-pdf={invoice_pdf_path}",
-                    "--no-pdf-header-footer",
-                    f"file://{temp_fd_name}",
-                ],
-                capture_output=True,
-            )
-
         self._filter_columns()
 
         # self.name is name of folder storing invoices
@@ -154,19 +117,10 @@ class PIInvoice(invoice.Invoice):
 
             pi_dataframe = self._get_pi_dataframe(self.export_data, pi)
             pi_instituition = pi_dataframe[invoice.INSTITUTION_FIELD].iat[0]
+            invoice_pdf_path = (
+                f"{self.name}/{pi_instituition}_{pi}_{self.invoice_month}.pdf"
+            )
 
             with tempfile.NamedTemporaryFile(mode="w", suffix=".html") as temp_fd:
-                _create_html_invoice(temp_fd)
-                _create_pdf_invoice(temp_fd.name)
-
-    def export_s3(self, s3_bucket):
-        def _export_s3_pi_invoice(pi_invoice):
-            pi_invoice_path = os.path.join(self.name, pi_invoice)
-            striped_invoice_path = os.path.splitext(pi_invoice_path)[0]
-            output_s3_path = f"Invoices/{self.invoice_month}/{striped_invoice_path}.pdf"
-            output_s3_archive_path = f"Invoices/{self.invoice_month}/Archive/{striped_invoice_path} {util.get_iso8601_time()}.pdf"
-            s3_bucket.upload_file(pi_invoice_path, output_s3_path)
-            s3_bucket.upload_file(pi_invoice_path, output_s3_archive_path)
-
-        for pi_invoice in os.listdir(self.name):
-            _export_s3_pi_invoice(pi_invoice)
+                self._create_html_invoice(temp_fd, pi_dataframe, "pi_invoice.html")
+                self._create_pdf_invoice(temp_fd.name, invoice_pdf_path)

@@ -6,6 +6,7 @@ from process_report.invoices import (
     pi_specific_invoice,
     prepay_credits_snapshot,
     NERC_total_invoice,
+    MOCA_group_specific_invoice,
 )
 
 from process_report.processors import (
@@ -96,6 +97,18 @@ def new_coldfront_fetch_processor(
         nonbillable_projects = []
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
         name, invoice_month, data, nonbillable_projects, coldfront_data_filepath
+    )
+
+
+def new_MOCA_group_specific_invoice(
+    name="", invoice_month="0000-00", data=None, prepay_credits=None
+):
+    if data is None:
+        data = pandas.DataFrame()
+    if prepay_credits is None:
+        prepay_credits = pandas.DataFrame()
+    return MOCA_group_specific_invoice.MOCAGroupInvoice(
+        name, invoice_month, data, prepay_credits
     )
 
 
