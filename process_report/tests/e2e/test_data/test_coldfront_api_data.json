@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "project": {
+            "pi": "pi1@bu.edu"
+        },
+        "attributes": {
+            "Allocated Project Name": "P1",
+            "Allocated Project ID": "P1ID"
+        }
+    },
+    {
+        "id": 1,
+        "project": {
+            "pi": "pi1@bu.edu"
+        },
+        "attributes": {
+            "Allocated Project Name": "P2",
+            "Allocated Project ID": "P2ID"
+        }
+    },
+    {
+        "id": 1,
+        "project": {
+            "pi": "pi2@harvard.edu"
+        },
+        "attributes": {
+            "Allocated Project Name": "P3",
+            "Allocated Project ID": "P3ID"
+        }
+    }
+]
