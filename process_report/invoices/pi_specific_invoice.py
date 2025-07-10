@@ -9,7 +9,7 @@ import pandas
 from jinja2 import Environment, FileSystemLoader
 
 import process_report.invoices.invoice as invoice
-import process_report.util as util
+from process_report import config, util
 
 
 TEMPLATE_DIR_PATH = "process_report/templates"
@@ -41,6 +41,8 @@ class PIInvoice(invoice.Invoice):
         invoice.CREDIT_FIELD,
         invoice.BALANCE_FIELD,
     ]
+
+    name: str = config.PI_SPECIFIC_FOLDER_NAME
 
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
