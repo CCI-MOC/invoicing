@@ -1,0 +1,5 @@
+Invoice Month,Project - Allocation,Project - Allocation ID,Manager (PI),Invoice Email,Invoice Address,Institution,Institution - Specific Code,SU Hours (GBhr or SUhr),SU Type,Rate,Cost
+2024-01,TestProject1,TP1,testpi1@bu.edu,testpi1@bu.edu,"123 Test St, Boston MA 02101",Boston University,BU,100,OpenShift CPU,0.013,50.00
+2024-01,TestProject2,TP2,testpi2@harvard.edu,testpi2@harvard.edu,"456 Harvard Ave, Cambridge MA 02138",Harvard University,HARVARD,200,OpenShift CPU,0.013,75.00
+2024-01,TestProject3,TP3,testpi3@mit.edu,testpi3@mit.edu,"789 MIT Blvd, Cambridge MA 02139",Massachusetts Institute of Technology,MIT,150,OpenShift CPU,0.013,100.00
+2024-01,NonbillableProject,NBP1,nonbillable@example.edu,nonbillable@example.edu,"999 Test Ave, Boston MA 02101",Test Institution,TEST,50,OpenShift CPU,0.013,25.00

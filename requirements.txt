@@ -4,3 +4,4 @@ pyarrow
 boto3
 Jinja2
 validators
+pytest
