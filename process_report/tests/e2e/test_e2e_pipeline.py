@@ -1,11 +1,10 @@
 import os
-import tempfile
 from pathlib import Path
 import pandas as pd
 import pytest
-import shutil
 import logging
 import subprocess
+from typing import Dict, List
 
 
 # Test Configuration
@@ -28,45 +27,70 @@ EXPECTED_DIRECTORIES = ["pi_invoices"]
 
 
 @pytest.fixture
-def project_root():
-    """Get the root directory of the project."""
+def project_root() -> Path:
+    """Get the root directory of the project.
+
+    Returns:
+        Path: The absolute path to the project root directory.
+    """
     return Path(__file__).parent.parent.parent.parent
 
 
 @pytest.fixture
-def test_data_dir():
-    """Get the directory containing test data files."""
+def test_data_dir() -> Path:
+    """Get the directory containing test data files.
+
+    Returns:
+        Path: The absolute path to the test data directory.
+    """
     return Path(__file__).parent / "test_data"
 
 
-@pytest.fixture
-def test_workspace(test_data_dir, project_root):
-    """Create a temporary workspace with test data and pipeline code."""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        workspace = Path(temp_dir)
-        test_files = _setup_workspace(test_data_dir, project_root, workspace)
-        yield workspace, test_files
+def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
+    """Set up the workspace by collecting absolute paths to test data files.
 
+    Args:
+        test_data_dir: Path to the directory containing test data files.
+        project_root: Path to the project root directory.
+        workspace: Path to the temporary workspace directory.
 
-def _setup_workspace(test_data_dir, project_root, workspace):
-    """Set up the workspace by copying test data and pipeline code."""
-    # Copy test data files
+    Returns:
+        Dict[str, Path]: A dictionary mapping test file names to their absolute paths.
+    """
+    # Get absolute paths to test data files
     test_files = {}
     for test_file in test_data_dir.glob("*"):
-        dest_path = workspace / test_file.name
-        shutil.copy(test_file, dest_path)
-        test_files[test_file.name] = dest_path
+        test_files[test_file.name] = test_file.absolute()
 
-    # Copy pipeline code
-    process_report_src = project_root / "process_report"
-    process_report_dest = workspace / "process_report"
-    shutil.copytree(process_report_src, process_report_dest)
+    process_report_dir = workspace / "process_report"
+    process_report_dir.mkdir(exist_ok=True)
+
+    # Using a symlink to real institute_list.yaml file that's hardcoded in the util.py file
+    institute_list_src = project_root / "process_report" / "institute_list.yaml"
+    institute_list_dest = process_report_dir / "institute_list.yaml"
+    institute_list_dest.symlink_to(institute_list_src)
+    # Using a symlink to real templates directory that's hardcoded in the process_report.py file
+    templates_src = project_root / "process_report" / "templates"
+    templates_dest = process_report_dir / "templates"
+    templates_dest.symlink_to(templates_src, target_is_directory=True)
 
     return test_files
 
 
-def _prepare_pipeline_execution(test_files, workspace):
-    """Build command and environment for pipeline execution."""
+def _prepare_pipeline_execution(
+    test_files: Dict[str, Path], workspace: Path, project_root: Path
+):
+    """Build command and environment for pipeline execution.
+
+    Args:
+        test_files: Dictionary mapping test file names to their absolute paths.
+        workspace: Path to the temporary workspace directory.
+        project_root: Path to the project root directory.
+
+    Returns:
+        Tuple[List[str], Dict[str, str]]: A tuple containing the command list and
+            environment dictionary for running the pipeline.
+    """
     # Build command
     command = [
         "python",
@@ -103,13 +127,25 @@ def _prepare_pipeline_execution(test_files, workspace):
     # Set up environment
     env = os.environ.copy()
     env["CHROME_BIN_PATH"] = CHROME_BIN_PATH
-    env["PYTHONPATH"] = str(workspace) + ":" + env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = str(project_root) + ":" + env.get("PYTHONPATH", "")
 
     return command, env
 
 
-def _run_pipeline(command, env, workspace):
-    """Run the pipeline and return the result."""
+def _run_pipeline(command: List[str], env: Dict[str, str], workspace: Path):
+    """Run the pipeline and return the result.
+
+    Args:
+        command: List of command arguments to execute the pipeline.
+        env: Environment variables dictionary.
+        workspace: Path to the temporary workspace directory where the pipeline will run.
+
+    Returns:
+        subprocess.CompletedProcess: The result of the pipeline execution.
+
+    Raises:
+        pytest.fail: If the pipeline execution times out.
+    """
     logger = logging.getLogger(__name__)
     logger.info(f"Running pipeline in: {workspace}")
 
@@ -132,8 +168,16 @@ def _run_pipeline(command, env, workspace):
         pytest.fail(f"Pipeline execution timed out after {PIPELINE_TIMEOUT} seconds")
 
 
-def _validate_outputs(workspace):
-    """Validate all expected pipeline outputs."""
+def _validate_outputs(workspace: Path) -> None:
+    """Validate all expected pipeline outputs.
+
+    Args:
+        workspace: Path to the temporary workspace directory containing pipeline outputs.
+
+    Raises:
+        AssertionError: If any expected output file is missing, empty, or invalid.
+        pytest.fail: If CSV files cannot be read or parsed.
+    """
     logger = logging.getLogger(__name__)
     logger.info(f"Validating pipeline outputs in: {workspace}")
 
@@ -162,30 +206,25 @@ def _validate_outputs(workspace):
     logger.info("All pipeline outputs validated successfully")
 
 
-def test_e2e_pipeline_execution(test_workspace):
+def test_e2e_pipeline_execution(
+    project_root: Path, test_data_dir: Path, tmp_path: Path
+):
     """
     End-to-end test of the entire invoice processing pipeline.
-
-    This test:
-    1. Sets up a temporary workspace with test data
-    2. Runs the complete pipeline with test inputs
-    3. Validates that all expected outputs are generated
-    4. Checks that output files have correct structure
     """
-    workspace, test_files = test_workspace
+    workspace = tmp_path
+
+    test_files = _setup_workspace(test_data_dir, project_root, workspace)
 
     # Prepare pipeline execution
-    command, env = _prepare_pipeline_execution(test_files, workspace)
+    command, env = _prepare_pipeline_execution(test_files, workspace, project_root)
 
-    # Run the pipeline
     result = _run_pipeline(command, env, workspace)
 
-    # Check pipeline succeeded
     assert result.returncode == 0, (
         f"Pipeline failed with exit code {result.returncode}\n"
         f"Stdout: {result.stdout}\n"
         f"Stderr: {result.stderr}"
     )
 
-    # Validate outputs
     _validate_outputs(workspace)
