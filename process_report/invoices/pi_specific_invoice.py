@@ -13,6 +13,7 @@ import process_report.util as util
 
 
 TEMPLATE_DIR_PATH = "process_report/templates"
+CHROME_BIN_PATH = os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium")
 
 
 logger = logging.getLogger(__name__)
@@ -120,12 +121,9 @@ class PIInvoice(invoice.Invoice):
             temp_fd.flush()
 
         def _create_pdf_invoice(temp_fd_name):
-            chrome_binary_location = os.environ.get(
-                "CHROME_BIN_PATH", "/usr/bin/chromium"
-            )
-            if not os.path.exists(chrome_binary_location):
+            if not os.path.exists(CHROME_BIN_PATH):
                 sys.exit(
-                    f"Chrome binary does not exist at {chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
+                    f"Chrome binary does not exist at {CHROME_BIN_PATH}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
                 )
 
             invoice_pdf_path = (
@@ -133,7 +131,7 @@ class PIInvoice(invoice.Invoice):
             )
             subprocess.run(
                 [
-                    chrome_binary_location,
+                    CHROME_BIN_PATH,
                     "--headless",
                     "--no-sandbox",
                     f"--print-to-pdf={invoice_pdf_path}",
