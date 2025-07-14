@@ -1,4 +1,5 @@
 import os
+from typing import override
 
 import pandas as pd
 
@@ -8,6 +9,10 @@ from process_report.tests.base import BaseTestCaseWithTempDir
 
 
 class TestPIInvoiceExport(BaseTestCaseWithTempDir):
+    invoice_month: str = ""
+    df: pd.DataFrame = pd.DataFrame()
+
+    @override
     def setUp(self):
         super().setUp()
         self.invoice_month = "2024-01"
@@ -42,7 +47,7 @@ class TestPIInvoiceExport(BaseTestCaseWithTempDir):
 
     def test_pi_invoice_pdf_generation(self):
         pi_invoice = PIInvoice(
-            name=self.tempdir, invoice_month=self.invoice_month, data=self.df
+            name=str(self.tempdir), invoice_month=self.invoice_month, data=self.df
         )
         pi_invoice.process()
         pi_invoice.export()
