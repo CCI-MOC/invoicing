@@ -6,13 +6,13 @@ import logging
 import subprocess
 from typing import Dict, List
 
+logger = logging.getLogger(__name__)
 
-# Test Configuration
+# Long timeout needed because pipeline includes PDF generation via Chromium
 PIPELINE_TIMEOUT = 600  # 10 minutes
 INVOICE_MONTH = "2025-06"
-CHROME_BIN_PATH = "/usr/bin/chromium"
 
-# Expected output files from the pipeline
+# Comprehensive list ensures we catch both missing files and unexpected output
 EXPECTED_CSV_FILES = [
     "billable 2025-06.csv",
     "nonbillable 2025-06.csv",
@@ -21,6 +21,7 @@ EXPECTED_CSV_FILES = [
     "Lenovo 2025-06.csv",
     "MOCA-A_Prepaid_Groups-2025-06-Invoice.csv",
     "NERC_Prepaid_Group-Credits-2025-06.csv",
+    "OCP_TEST 2025-06.csv",
 ]
 
 EXPECTED_DIRECTORIES = ["pi_invoices"]
@@ -57,7 +58,7 @@ def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
     Returns:
         Dict[str, Path]: A dictionary mapping test file names to their absolute paths.
     """
-    # Get absolute paths to test data files
+    # Absolute paths prevent issues when subprocess runs from different working directory
     test_files = {}
     for test_file in test_data_dir.glob("*"):
         test_files[test_file.name] = test_file.absolute()
@@ -69,6 +70,7 @@ def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
     institute_list_src = project_root / "process_report" / "institute_list.yaml"
     institute_list_dest = process_report_dir / "institute_list.yaml"
     institute_list_dest.symlink_to(institute_list_src)
+
     # Using a symlink to real templates directory that's hardcoded in the process_report.py file
     templates_src = project_root / "process_report" / "templates"
     templates_dest = process_report_dir / "templates"
@@ -124,9 +126,11 @@ def _prepare_pipeline_execution(
         str(test_files["test_prepay_contacts.csv"]),
     ]
 
-    # Set up environment
+    # Environment setup for subprocess execution
     env = os.environ.copy()
-    env["CHROME_BIN_PATH"] = CHROME_BIN_PATH
+    # Fallback ensures test works even when CI environment doesn't set Chrome path
+    if "CHROME_BIN_PATH" not in env:
+        env["CHROME_BIN_PATH"] = "/usr/bin/chromium"
     env["PYTHONPATH"] = str(project_root) + ":" + env.get("PYTHONPATH", "")
 
     return command, env
@@ -146,7 +150,6 @@ def _run_pipeline(command: List[str], env: Dict[str, str], workspace: Path):
     Raises:
         pytest.fail: If the pipeline execution times out.
     """
-    logger = logging.getLogger(__name__)
     logger.info(f"Running pipeline in: {workspace}")
 
     try:
@@ -178,24 +181,35 @@ def _validate_outputs(workspace: Path) -> None:
         AssertionError: If any expected output file is missing, empty, or invalid.
         pytest.fail: If CSV files cannot be read or parsed.
     """
-    logger = logging.getLogger(__name__)
     logger.info(f"Validating pipeline outputs in: {workspace}")
 
-    # Validate CSV files
+    # Basic existence and structure validation catches pipeline execution failures
     for csv_file in EXPECTED_CSV_FILES:
         csv_path = workspace / csv_file
         assert csv_path.exists(), f"CSV file not found: {csv_path}"
         assert csv_path.is_file(), f"Path is not a file: {csv_path}"
         assert csv_path.stat().st_size > 0, f"CSV file is empty: {csv_path}"
 
-        # Check file can be read as CSV
+        # Basic parsing check ensures files aren't corrupted or malformed
         try:
             df = pd.read_csv(csv_path)
             assert len(df.columns) > 0, f"CSV has no columns: {csv_path}"
         except Exception as e:
             pytest.fail(f"Failed to read CSV {csv_path}: {e}")
 
-    # Validate PI invoices directory
+    # Validate that only expected CSV files are created (no more, no less)
+    actual_csv_files = set(csv_path.name for csv_path in workspace.glob("*.csv"))
+    expected_csv_files = set(EXPECTED_CSV_FILES)
+
+    unexpected_files = actual_csv_files - expected_csv_files
+    if unexpected_files:
+        pytest.fail(f"Unexpected CSV files created: {sorted(unexpected_files)}")
+
+    missing_files = expected_csv_files - actual_csv_files
+    if missing_files:
+        pytest.fail(f"Expected CSV files missing: {sorted(missing_files)}")
+
+    # PI invoices are generated as PDFs in separate directory structure
     pi_dir = workspace / "pi_invoices"
     assert pi_dir.exists(), f"PI invoices directory not found: {pi_dir}"
     assert pi_dir.is_dir(), f"PI invoices path is not a directory: {pi_dir}"
@@ -210,13 +224,14 @@ def test_e2e_pipeline_execution(
     project_root: Path, test_data_dir: Path, tmp_path: Path
 ):
     """
-    End-to-end test of the entire invoice processing pipeline.
+    Validates the full pipeline runs without errors and produces expected outputs.
+
+    This test ensures integration between all components rather than testing edge cases.
     """
     workspace = tmp_path
 
     test_files = _setup_workspace(test_data_dir, project_root, workspace)
 
-    # Prepare pipeline execution
     command, env = _prepare_pipeline_execution(test_files, workspace, project_root)
 
     result = _run_pipeline(command, env, workspace)

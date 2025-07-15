@@ -25,6 +25,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
+        pip install -r process_report/tests/test-requirements.txt
 
     - name: Run E2E Tests
       run: |

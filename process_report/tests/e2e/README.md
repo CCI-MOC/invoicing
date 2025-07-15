@@ -17,29 +17,11 @@ The main E2E test (`test_e2e_pipeline.py`) tests the following pipeline stages:
 
 ### Input Processing
 - Combines multiple CSV invoice files (OpenShift, OpenStack, Storage)
-- Processes PI aliases and institution mappings
-- Handles non-billable PIs and projects
-- Processes timed projects and prepayment data
-
-### Core Processing
-- Fetches data from Coldfront (mocked in tests)
-- Applies credits and subsidies
-- Processes prepayments and group billing
-- Generates all invoice types
-
-### Output Generation
-- Billable invoice (`NERC 2024-01.csv`)
-- Non-billable invoice (`NERC (Nonbillable) 2024-01.csv`)
-- NERC total invoice (`NERC-2024-01-Total-Invoice.csv`)
-- BU internal invoice (`NERC BU 2024-01.csv`)
-- Lenovo invoice (`Lenovo 2024-01.csv`)
-- MOCA prepaid invoice (`MOCA-A_Prepaid_Groups-2024-01-Invoice.csv`)
-- Prepay credits snapshot (`NERC_Prepaid_Group-Credits-2024-01.csv`)
-- PI-specific PDF invoices (generation is mocked)
+- Passing all inputs to `Processor` and `Invoice` subclasses
 
 ## Test Data
 
-The `test_data/` directory contains realistic test data that mimics production inputs:
+The `test_data/` directory contains the minimal dataset required by the pipeline.
 
 - **CSV Invoice Files**: `test_invoice_openshift.csv`, `test_invoice_openstack.csv`, `test_invoice_storage.csv`
 - **Configuration Files**: Non-billable PIs/projects, timed projects, prepay configurations
@@ -119,10 +101,9 @@ To add new validations:
 
 ## Limitations
 
-- **No S3 Integration**: S3 operations are mocked to avoid external dependencies
-- **PDF Generation**: Chromium calls are mocked but directory structure is validated
-- **External APIs**: Coldfront and other API calls are mocked
-- **Performance**: Not designed for performance testing, only functional validation
+- **No S3 Integration**: S3 operations are bypassed in this e2e test implementation.
+- **External APIs**: Coldfront and other external APIs are also bypassed in this e2e testing implementation.
+- **Non-Representative Test Data**: the test data in the `test_data/` represents only the minimum required data to run the pipeline.
 
 ## Troubleshooting
 
