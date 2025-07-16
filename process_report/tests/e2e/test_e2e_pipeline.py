@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 PIPELINE_TIMEOUT = 600  # 10 minutes
 INVOICE_MONTH = "2025-06"
 
-# Comprehensive list ensures we catch both missing files and unexpected output
 EXPECTED_CSV_FILES = [
     "billable 2025-06.csv",
     "nonbillable 2025-06.csv",
@@ -58,7 +57,7 @@ def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
     Returns:
         Dict[str, Path]: A dictionary mapping test file names to their absolute paths.
     """
-    # Absolute paths prevent issues when subprocess runs from different working directory
+    # Absolute paths prevent issues when running pipeline from different working directory
     test_files = {}
     for test_file in test_data_dir.glob("*"):
         test_files[test_file.name] = test_file.absolute()
@@ -129,8 +128,7 @@ def _prepare_pipeline_execution(
     # Environment setup for subprocess execution
     env = os.environ.copy()
     # Fallback ensures test works even when CI environment doesn't set Chrome path
-    if "CHROME_BIN_PATH" not in env:
-        env["CHROME_BIN_PATH"] = "/usr/bin/chromium"
+    env.setdefault("CHROME_BIN_PATH", "/usr/bin/chromium")
     env["PYTHONPATH"] = str(project_root) + ":" + env.get("PYTHONPATH", "")
 
     return command, env
@@ -183,14 +181,12 @@ def _validate_outputs(workspace: Path) -> None:
     """
     logger.info(f"Validating pipeline outputs in: {workspace}")
 
-    # Basic existence and structure validation catches pipeline execution failures
     for csv_file in EXPECTED_CSV_FILES:
         csv_path = workspace / csv_file
         assert csv_path.exists(), f"CSV file not found: {csv_path}"
         assert csv_path.is_file(), f"Path is not a file: {csv_path}"
         assert csv_path.stat().st_size > 0, f"CSV file is empty: {csv_path}"
 
-        # Basic parsing check ensures files aren't corrupted or malformed
         try:
             df = pd.read_csv(csv_path)
             assert len(df.columns) > 0, f"CSV has no columns: {csv_path}"
