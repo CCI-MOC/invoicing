@@ -1,10 +1,13 @@
 from dataclasses import dataclass
 
 import process_report.invoices.invoice as invoice
+from process_report import config
 
 
 @dataclass
 class OcpTestInvoice(invoice.Invoice):
+    name: str = config.OCP_TEST_INVOICE_NAME
+
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

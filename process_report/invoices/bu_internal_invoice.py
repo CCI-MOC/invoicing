@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 import process_report.invoices.invoice as invoice
+from process_report import config
 
 
 @dataclass
@@ -11,6 +12,7 @@ class BUInternalInvoice(invoice.Invoice):
     - NewPICreditProcessor
     """
 
+    name: str = config.BU_INTERNAL_INVOICE_NAME
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PI_FIELD,

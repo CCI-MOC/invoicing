@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import process_report.invoices.invoice as invoice
 import process_report.util as util
+from process_report import config
 
 
 @dataclass
@@ -12,6 +13,7 @@ class NERCTotalInvoice(invoice.Invoice):
     - NewPICreditProcessor
     """
 
+    name: str = config.NERC_TOTAL_INVOICE_NAME
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
