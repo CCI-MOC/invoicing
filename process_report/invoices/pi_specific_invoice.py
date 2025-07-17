@@ -93,19 +93,17 @@ class PIInvoice(invoice.Invoice):
                 column_sums.append(pi_projects[column_name].sum())
                 sum_columns_list.append(column_name)
 
-        # Add totals row by copying the first row and modifying values
-        if not pi_projects.empty:
-            # Copying the first row and modifying values
-            totals_row = pi_projects.iloc[[0]].copy()
-            # Clear all values to empty strings
-            for col in totals_row.columns:
-                totals_row[col] = ""
+        # Copy the first row and modify values to keep row formatting
+        totals_row = pi_projects.iloc[[0]].copy()
+        # Clear all values to empty strings
+        for col in totals_row.columns:
+            totals_row[col] = ""
 
-            totals_row[invoice.INVOICE_DATE_FIELD] = "Total"
-            for col, sum_val in zip(sum_columns_list, column_sums):
-                totals_row[col] = sum_val
+        totals_row[invoice.INVOICE_DATE_FIELD] = "Total"
+        for col, sum_val in zip(sum_columns_list, column_sums):
+            totals_row[col] = sum_val
 
-            pi_projects = pandas.concat([pi_projects, totals_row], ignore_index=True)
+        pi_projects = pandas.concat([pi_projects, totals_row], ignore_index=True)
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:

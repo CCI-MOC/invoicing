@@ -58,7 +58,6 @@ class TestPISpecificInvoice(TestCase):
             group_name=[None, "G1", None, None],
         )
 
-        # Expected result for PI1 - build using the new approach
         answer_invoice_pi1 = (
             test_invoice[test_invoice["Manager (PI)"] == "PI1"]
             .copy()
@@ -86,13 +85,13 @@ class TestPISpecificInvoice(TestCase):
         answer_invoice_pi1 = answer_invoice_pi1.astype(pandas.StringDtype())
         answer_invoice_pi1.fillna("", inplace=True)
 
-        # Expected result for PI2 - build using the new approach
         answer_invoice_pi2 = (
             test_invoice[test_invoice["Manager (PI)"] == "PI2"]
             .copy()
             .reset_index(drop=True)
         )
-        # Create totals row by copying first row and modifying
+
+        # Create totals row by copying first row and modifying to preserve formatting
         totals_row = answer_invoice_pi2.iloc[[0]].copy()
         for col in totals_row.columns:
             totals_row[col] = ""
@@ -176,12 +175,10 @@ class TestPISpecificInvoice(TestCase):
 
         pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
 
-        # Capture all warnings
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             pi_inv.process()
 
-            # Assert no warnings were raised
             self.assertEqual(
                 len(w),
                 0,
