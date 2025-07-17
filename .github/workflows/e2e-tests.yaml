@@ -29,6 +29,6 @@ jobs:
 
     - name: Run E2E Tests
       run: |
-        pytest process_report/tests/e2e/test_e2e_pipeline.py -v
+        pytest process_report/tests/e2e/test_e2e_pipeline.py -v -s --log-cli-level=INFO
       env:
         CHROME_BIN_PATH: '/usr/bin/chromium'
