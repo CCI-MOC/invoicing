@@ -1,0 +1,5 @@
+Invoice Month,Project - Allocation,Project - Allocation ID,Manager (PI),Cluster Name,Invoice Email,Invoice Address,Institution,Institution - Specific Code,SU Hours (GBhr or SUhr),SU Type,Rate,Cost
+2024-01,P4ID,P4ID,pi4@example.edu,ocp-test,pi4@example.edu,"123 Test St, Boston MA 02101",Boston University,BU,280,OpenShift CPU,0.013,100.0
+2024-01,P4ID,P4ID,pi4@example.edu,ocp-test,pi4@example.edu,"123 Test St, Boston MA 02101",Boston University,BU,280,OpenStack GPUA100SXM4,0.013,100
+2024-01,P5ID,P5ID,pi5@harvard.edu,ocp-test,pi5@harvard.edu,"456 Harvard Ave, Cambridge MA 02138",Harvard University,HARVARD,280,OpenShift CPU,0.013,200
+2024-01,P6ID,P6ID,pi6@mit.edu,ocp-test,pi6@mit.edu,"789 MIT Blvd, Cambridge MA 02139",MIT,MIT,280,OpenShift CPU,0.013,300

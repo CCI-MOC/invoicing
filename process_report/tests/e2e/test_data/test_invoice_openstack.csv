@@ -1,0 +1,4 @@
+Invoice Month,Project - Allocation,Project - Allocation ID,Manager (PI),Invoice Email,Invoice Address,Institution,Institution - Specific Code,SU Hours (GBhr or SUhr),SU Type,Rate,Cost
+2024-01,TestProject1,TP1,testpi1@bu.edu,testpi1@bu.edu,"123 Test St, Boston MA 02101",Boston University,BU,50,OpenStack CPU,0.013,30.00
+2024-01,TestProject2,TP2,testpi2@harvard.edu,testpi2@harvard.edu,"456 Harvard Ave, Cambridge MA 02138",Harvard University,HARVARD,80,OpenStack CPU,0.013,40.00
+2024-01,TestProject4,TP4,testpi4@northeastern.edu,testpi4@northeastern.edu,"360 Huntington Ave, Boston MA 02115",Northeastern University,NEU,120,OpenStack CPU,0.013,65.00
