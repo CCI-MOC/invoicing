@@ -2,7 +2,6 @@ import pandas
 
 from process_report.invoices import (
     invoice,
-    billable_invoice,
     pi_specific_invoice,
     prepay_credits_snapshot,
     NERC_total_invoice,
@@ -10,7 +9,6 @@ from process_report.invoices import (
 
 from process_report.processors import (
     coldfront_fetch_processor,
-    add_institution_processor,
     validate_pi_alias_processor,
     lenovo_processor,
     validate_billable_pi_processor,
@@ -29,30 +27,6 @@ def new_base_invoice(
     if data is None:
         data = pandas.DataFrame()
     return invoice.Invoice(name, invoice_month, data)
-
-
-def new_billable_invoice(
-    name="",
-    invoice_month="0000-00",
-    data=None,
-    nonbillable_pis=None,
-    nonbillable_projects=None,
-    old_pi_filepath="",
-    updated_old_pi_df=pandas.DataFrame(),
-):
-    if data is None:
-        data = pandas.DataFrame()
-    if nonbillable_pis is None:
-        nonbillable_pis = []
-    if nonbillable_projects is None:
-        nonbillable_projects = []
-    return billable_invoice.BillableInvoice(
-        name,
-        invoice_month,
-        data,
-        old_pi_filepath,
-        updated_old_pi_df,
-    )
 
 
 def new_pi_specific_invoice(
@@ -97,16 +71,6 @@ def new_coldfront_fetch_processor(
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
         name, invoice_month, data, nonbillable_projects, coldfront_data_filepath
     )
-
-
-def new_add_institution_processor(
-    name="",
-    invoice_month="0000-00",
-    data=None,
-):
-    if data is None:
-        data = pandas.DataFrame()
-    return add_institution_processor.AddInstitutionProcessor(name, invoice_month, data)
 
 
 def new_validate_pi_alias_processor(

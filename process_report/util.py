@@ -65,13 +65,6 @@ def get_iso8601_time():
     return datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
 
 
-def compare_invoice_month(month_1, month_2):
-    """Returns True if 1st date is later than 2nd date"""
-    dt1 = datetime.datetime.strptime(month_1, "%Y-%m")
-    dt2 = datetime.datetime.strptime(month_2, "%Y-%m")
-    return dt1 > dt2
-
-
 def get_month_diff(month_1, month_2):
     """Returns a positive integer if month_1 is ahead in time of month_2"""
     dt1 = datetime.datetime.strptime(month_1, "%Y-%m")
