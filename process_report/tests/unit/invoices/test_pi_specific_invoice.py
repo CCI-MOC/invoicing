@@ -1,7 +1,6 @@
 import tempfile
 from unittest import TestCase, mock
 import pandas
-import warnings
 
 from process_report.tests import util as test_utils
 
@@ -41,8 +40,8 @@ class TestPISpecificInvoice(TestCase):
 
     def test_get_pi_dataframe(self):
         def add_dollar_sign(data):
-            if pandas.isna(data) or data == "":
-                return "$" if data == "" else data
+            if pandas.isna(data):
+                return data
             else:
                 return "$" + str(data)
 
@@ -164,23 +163,26 @@ class TestPISpecificInvoice(TestCase):
                 ]
                 self.assertTrue(answer_arglist == chrome_arglist[0][:-1])
 
-    def test_process_no_warnings(self):
+    @mock.patch("process_report.invoices.invoice.Invoice._filter_columns")
+    @mock.patch("os.path.exists")
+    @mock.patch("subprocess.run")
+    def test_process_no_warnings(
+        self, mock_subprocess_run, mock_path_exists, mock_filter_cols
+    ):
         """Test that no warnings are raised during invoice processing"""
+        invoice_month = "2024-10"
         test_invoice = self._get_test_invoice(
             ["PI1", "PI1", "PI2", "PI2"],
             ["BU", "BU", "HU", "HU"],
             [100, 200, 300, 400],
             group_name=[None, "G1", None, None],
         )
-
-        pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            pi_inv.process()
-
-            self.assertEqual(
-                len(w),
-                0,
-                f"Unexpected warnings raised: {[str(warning.message) for warning in w]}",
+        with tempfile.TemporaryDirectory() as test_dir:
+            pi_inv = test_utils.new_pi_specific_invoice(
+                test_dir, invoice_month, data=test_invoice
             )
+            with self.assertNoLogs(
+                "process_report.invoices.pi_specific_invoice", level="WARNING"
+            ):
+                pi_inv.process()
+                pi_inv.export()
