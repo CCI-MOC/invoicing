@@ -79,13 +79,25 @@ def get_month_diff(month_1, month_2):
     return (dt1.year - dt2.year) * 12 + (dt1.month - dt2.month)
 
 
-def process_and_export_invoices(invoice_list, upload_to_s3):
+def process_and_export_invoices(
+    invoice_month, processed_data, invoice_list, upload_to_s3
+):
     for invoice in invoice_list:
-        invoice.process()
-        invoice.export()
+        inv_instance = invoice(invoice_month=invoice_month, data=processed_data)
+        inv_instance.process()
+        inv_instance.export()
         if upload_to_s3:
             bucket = get_invoice_bucket()
-            invoice.export_s3(bucket)
+            inv_instance.export_s3(bucket)
+
+
+def process_merged_dataframe(invoice_month, merged_dataframe, processors: list):
+    for processor in processors:
+        proc_instance = processor(invoice_month=invoice_month, data=merged_dataframe)
+        proc_instance.process()
+        dataframe = processor.data
+
+    return dataframe
 
 
 def fetch_s3(s3_filepath):

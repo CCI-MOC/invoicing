@@ -1,16 +1,21 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas
 
+from process_report.config import config
 from process_report import util
 from process_report.invoices import invoice
 
 
 @dataclass
 class PrepayCreditsSnapshot(invoice.Invoice):
-    prepay_credits: pandas.DataFrame
-    prepay_contacts: pandas.DataFrame
-
+    name: str = ""
+    prepay_credits: pandas.DataFrame = field(
+        default_factory=config.get_prepaid_credits_df
+    )
+    prepay_contacts: pandas.DataFrame = field(
+        default_factory=config.get_prepaid_contacts_df
+    )
     export_columns_list = [
         invoice.PREPAY_MONTH_FIELD,
         invoice.PREPAY_GROUP_NAME_FIELD,

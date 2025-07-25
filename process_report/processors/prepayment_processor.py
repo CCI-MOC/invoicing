@@ -1,9 +1,10 @@
 import sys
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas
 
+from process_report.config import config
 from process_report import util
 from process_report.invoices import invoice
 from process_report.processors import discount_processor
@@ -22,11 +23,19 @@ class PrepaymentProcessor(discount_processor.DiscountProcessor):
     def PREPAY_DEBITS_S3_BACKUP_FILEPATH(self):
         return f"Prepay/Archive/prepay_debits {util.get_iso8601_time()}.csv"
 
-    prepay_credits: pandas.DataFrame
-    prepay_projects: pandas.DataFrame
-    prepay_contacts: pandas.DataFrame
-    prepay_debits_filepath: str
-    upload_to_s3: bool
+    prepay_credits: pandas.DataFrame = field(
+        default_factory=config.get_prepaid_credits_df
+    )
+    prepay_projects: pandas.DataFrame = field(
+        default_factory=config.get_prepaid_projects_df
+    )
+    prepay_contacts: pandas.DataFrame = field(
+        default_factory=config.get_prepaid_contacts_df
+    )
+    prepay_debits_filepath: str = field(
+        default_factory=config.get_prepay_debits_filepath
+    )
+    upload_to_s3: bool = config.UPLOAD_TO_S3
 
     @staticmethod
     def _load_prepay_debits(prepay_debits_filepath):

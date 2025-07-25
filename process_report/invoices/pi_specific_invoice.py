@@ -9,6 +9,7 @@ import pandas
 from jinja2 import Environment, FileSystemLoader
 
 import process_report.invoices.invoice as invoice
+from process_report.config import config
 import process_report.util as util
 
 
@@ -42,6 +43,8 @@ class PIInvoice(invoice.Invoice):
         invoice.CREDIT_FIELD,
         invoice.BALANCE_FIELD,
     ]
+
+    name: str = config.PI_SPECIFIC_FOLDER_NAME
 
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,

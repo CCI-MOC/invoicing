@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+from process_report.config import config
 import process_report.invoices.invoice as invoice
 
 
@@ -12,6 +13,7 @@ class LenovoInvoice(invoice.Invoice):
         "BM GPUH100",
     ]
 
+    name: str = config.LENOVO_INVOICE_NAME
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
