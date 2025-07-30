@@ -1,12 +1,12 @@
-name: Validate Chrome Integration
+name: Integration tests
 
 on:
   push:
   pull_request:
 
 jobs:
-  run-validation:
-    name: Run Integration Tests with Latest Chrome
+  run-integration-tests:
+    name: Run Integration Tests
     runs-on: ubuntu-latest
     env:
       CHROME_BIN_PATH: /usr/bin/chromium
@@ -24,11 +24,11 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Download and install latest Chrome
+      - name: Download and install latest Chromium
         run: |
           sudo apt-get update
           sudo apt-get install -y chromium
 
-      - name: Run PDF generation integration test
+      - name: Run integration tests
         run: |
-          python -m unittest process_report.tests.unit.test_chromium
+          python -m unittest discover -s process_report/tests/integration

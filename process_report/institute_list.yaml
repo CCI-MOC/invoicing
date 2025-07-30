@@ -102,3 +102,9 @@
 -   display_name: CipherSonic Labs
     domains:
     - ciphersoniclabs.io
+-   display_name: Arizona State University
+    domains:
+    - asu.edu
+-   display_name: Clark University
+    domains:
+    - clarku.edu
