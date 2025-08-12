@@ -13,7 +13,6 @@ import process_report.util as util
 
 
 TEMPLATE_DIR_PATH = "process_report/templates"
-CHROME_BIN_PATH = os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium")
 
 
 logger = logging.getLogger(__name__)
@@ -94,30 +93,43 @@ class PIInvoice(invoice.Invoice):
                 column_sums.append(pi_projects[column_name].sum())
                 sum_columns_list.append(column_name)
 
-        # Copy the first row and modify values to keep row formatting
-        totals_row = pi_projects.iloc[[0]].copy()
-        # Clear all values to empty strings
-        for col in totals_row.columns:
-            totals_row[col] = ""
+        # Create a new row with proper dtypes
+        new_row = {col: None for col in pi_projects.columns}
 
-        totals_row[invoice.INVOICE_DATE_FIELD] = "Total"
-        for col, sum_val in zip(sum_columns_list, column_sums):
-            totals_row[col] = sum_val
+        # Add Invoice Month column if it doesn't exist
+        if invoice.INVOICE_DATE_FIELD not in pi_projects.columns:
+            pi_projects[invoice.INVOICE_DATE_FIELD] = None
+            new_row[invoice.INVOICE_DATE_FIELD] = None
 
-        pi_projects = pandas.concat([pi_projects, totals_row], ignore_index=True)
+        new_row[invoice.INVOICE_DATE_FIELD] = "Total"
+        for col, val in zip(sum_columns_list, column_sums):
+            new_row[col] = val
+
+        # Convert all columns to object type before concatenation to avoid dtype warnings
+        pi_projects = pi_projects.astype("object")
+
+        # Add the totals row
+        pi_projects = pandas.concat(
+            [pi_projects, pandas.DataFrame([new_row]).astype("object")],
+            ignore_index=True,
+        )
 
         # Add dollar sign to certain columns
         for column_name in self.DOLLAR_COLUMN_LIST:
             if column_name in pi_projects.columns:
                 pi_projects[column_name] = pi_projects[column_name].apply(
-                    lambda data: data if pandas.isna(data) else f"${data}"
+                    lambda data: data if pandas.isna(data) else f"${float(data)}"
                 )
 
-        # Convert to StringDtype for template compatibility before filling NA values
-        pi_projects = pi_projects.astype(pandas.StringDtype())
+        # Convert all numeric columns to strings before filling NA values
+        # This prevents dtype incompatibility warnings
+        for col in pi_projects.columns:
+            # First ensure all columns are object type
+            if pi_projects[col].dtype.name.startswith(("float", "int")):
+                pi_projects[col] = pi_projects[col].astype("object")
 
-        # Convert any remaining pandas NA values to empty strings for template compatibility
-        pi_projects = pi_projects.fillna("")
+            # Then fill NA values with empty strings
+            pi_projects[col] = pi_projects[col].fillna("")
 
         return pi_projects
 
@@ -132,9 +144,12 @@ class PIInvoice(invoice.Invoice):
             temp_fd.flush()
 
         def _create_pdf_invoice(temp_fd_name):
-            if not os.path.exists(CHROME_BIN_PATH):
+            chrome_binary_location = os.environ.get(
+                "CHROME_BIN_PATH", "/usr/bin/chromium"
+            )
+            if not os.path.exists(chrome_binary_location):
                 sys.exit(
-                    f"Chrome binary does not exist at {CHROME_BIN_PATH}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
+                    f"Chrome binary does not exist at {chrome_binary_location}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
                 )
 
             invoice_pdf_path = (
@@ -142,7 +157,7 @@ class PIInvoice(invoice.Invoice):
             )
             subprocess.run(
                 [
-                    CHROME_BIN_PATH,
+                    chrome_binary_location,
                     "--headless",
                     "--no-sandbox",
                     f"--print-to-pdf={invoice_pdf_path}",
