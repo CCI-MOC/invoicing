@@ -101,10 +101,10 @@ class TestPISpecificInvoice(TestCase):
 
         pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
         output_invoice = pi_inv._get_pi_dataframe(test_invoice, "PI1")
-        self.assertTrue(answer_invoice_pi1.equals(output_invoice))
+        assert answer_invoice_pi1.equals(output_invoice)
 
         output_invoice = pi_inv._get_pi_dataframe(test_invoice, "PI2")
-        self.assertTrue(answer_invoice_pi2.equals(output_invoice))
+        assert answer_invoice_pi2.equals(output_invoice)
 
     @mock.patch("process_report.invoices.invoice.Invoice._filter_columns")
     @mock.patch("os.path.exists")
@@ -144,4 +144,4 @@ class TestPISpecificInvoice(TestCase):
                     f"--print-to-pdf={pi_pdf_path}",
                     "--no-pdf-header-footer",
                 ]
-                self.assertTrue(answer_arglist == chrome_arglist[0][:-1])
+                assert answer_arglist == chrome_arglist[0][:-1]
