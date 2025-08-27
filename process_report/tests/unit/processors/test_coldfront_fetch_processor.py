@@ -1,5 +1,6 @@
 from unittest import TestCase, mock
 import pandas
+import pytest
 
 from process_report.tests import util as test_utils
 
@@ -74,7 +75,7 @@ class TestColdfrontFetchProcessor(TestCase):
         )
         test_coldfront_fetch_proc.process()
         output_invoice = test_coldfront_fetch_proc.data
-        self.assertTrue(output_invoice.equals(answer_invoice))
+        assert output_invoice.equals(answer_invoice)
 
     @mock.patch(
         "process_report.processors.coldfront_fetch_processor.ColdfrontFetchProcessor._fetch_coldfront_allocation_api",
@@ -93,12 +94,11 @@ class TestColdfrontFetchProcessor(TestCase):
             data=test_invoice, nonbillable_projects=test_nonbillable_projects
         )
 
-        with self.assertRaises(ValueError) as cm:
+        with pytest.raises(ValueError) as cm:
             test_coldfront_fetch_proc.process()
 
-        self.assertEqual(
-            str(cm.exception),
-            f"Projects {answer_project_set} not found in Coldfront and are billable! Please check the project names",
+        assert str(cm.value) == (
+            f"Projects {answer_project_set} not found in Coldfront and are billable! Please check the project names"
         )
 
     @mock.patch(
@@ -128,4 +128,4 @@ class TestColdfrontFetchProcessor(TestCase):
         )
         test_coldfront_fetch_proc.process()
         output_invoice = test_coldfront_fetch_proc.data
-        self.assertTrue(output_invoice.equals(answer_invoice))
+        assert output_invoice.equals(answer_invoice)

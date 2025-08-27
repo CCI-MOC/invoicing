@@ -24,4 +24,4 @@ class TestValidateClusterNameProcessor(TestCase):
         )
         validate_proc.process()
 
-        self.assertTrue(validate_proc.data.equals(answer_invoice))
+        assert validate_proc.data.equals(answer_invoice)

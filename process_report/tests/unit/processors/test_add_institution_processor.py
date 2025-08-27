@@ -33,6 +33,4 @@ class TestAddInstitute(TestCase):
         }
 
         for pi_email, answer in answers.items():
-            self.assertEqual(
-                util.get_institution_from_pi(institute_map, pi_email), answer
-            )
+            assert util.get_institution_from_pi(institute_map, pi_email) == answer

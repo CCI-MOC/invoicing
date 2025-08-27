@@ -22,4 +22,4 @@ class TestValidateAliasProcessor(TestCase):
             data=test_data, alias_map=alias_map
         )
         validate_pi_alias_proc.process()
-        self.assertTrue(answer_data.equals(validate_pi_alias_proc.data))
+        assert answer_data.equals(validate_pi_alias_proc.data)

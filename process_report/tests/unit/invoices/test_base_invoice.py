@@ -15,7 +15,7 @@ class TestBaseInvoice(TestCase):
         inv._filter_columns()
         result_invoice = inv.export_data
 
-        self.assertTrue(result_invoice.equals(answer_invoice))
+        assert result_invoice.equals(answer_invoice)
 
 
 class TestUploadToS3(TestCase):
@@ -62,4 +62,4 @@ class TestUploadToS3(TestCase):
             sample_base_invoice.export_s3(mock_bucket)
 
         for i, call_args in enumerate(mock_bucket.upload_file.call_args_list):
-            self.assertTrue(answers[i] in call_args)
+            assert answers[i] in call_args

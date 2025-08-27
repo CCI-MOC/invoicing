@@ -3,6 +3,7 @@ import tempfile
 import pandas
 import os
 from textwrap import dedent
+import pytest
 
 from process_report import process_report, util
 
@@ -16,8 +17,8 @@ class TestMonthUtils(TestCase):
             (("2024-12", "2025-03"), -3),
         ]
         for arglist, answer in testcases:
-            self.assertEqual(util.get_month_diff(*arglist), answer)
-        with self.assertRaises(ValueError):
+            assert util.get_month_diff(*arglist) == answer
+        with pytest.raises(ValueError):
             util.get_month_diff("2024-16", "2025-03")
 
 
@@ -51,12 +52,12 @@ class TestMergeCSV(TestCase):
         )
 
         expected_rows = len(self.data) * 3
-        self.assertEqual(
-            len(merged_dataframe), expected_rows
-        )  # `len` for a pandas dataframe excludes the header row
+
+        # `len` for a pandas dataframe excludes the header row
+        assert len(merged_dataframe) == expected_rows
 
         # Assert that the headers in the merged DataFrame match the expected headers
-        self.assertListEqual(merged_dataframe.columns.tolist(), self.header)
+        assert merged_dataframe.columns.tolist() == self.header
 
 
 class TestTimedProjects(TestCase):
@@ -88,7 +89,7 @@ class TestTimedProjects(TestCase):
         )
 
         expected_projects = ["ProjectB", "ProjectC", "ProjectD"]
-        self.assertEqual(excluded_projects, expected_projects)
+        assert excluded_projects == expected_projects
 
 
 class TestValidateRequiredEnvVars(TestCase):
@@ -102,7 +103,7 @@ class TestValidateRequiredEnvVars(TestCase):
 
     @mock.patch.dict("os.environ", {"KEYCLOAK_CLIENT_ID": "test"})
     def test_env_vars_missing(self):
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             process_report.validate_required_env_vars(
                 ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"]
             )
