@@ -6,7 +6,11 @@ from process_report.processors import processor
 
 @dataclass
 class ValidateClusterNameProcessor(processor.Processor):
-    CLUSTER_NAME_MAP = {"NERC": "stack", "NERC-OCP": "ocp-prod"}
+    CLUSTER_NAME_MAP = {
+        "NERC": "stack",
+        "NERC-OCP": "ocp-prod",
+        "NERC-OCP-EDU": "academic",
+    }
 
     def _process(self):
         self.data[invoice.CLUSTER_NAME_FIELD] = self.data[
