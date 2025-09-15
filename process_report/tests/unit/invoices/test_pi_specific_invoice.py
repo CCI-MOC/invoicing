@@ -62,10 +62,17 @@ class TestPISpecificInvoice(TestCase):
             .copy()
             .reset_index(drop=True)
         )
-        answer_invoice_pi1.loc[len(answer_invoice_pi1)] = None
-        answer_invoice_pi1.loc[
-            answer_invoice_pi1.index[-1], ["Invoice Month", "Balance"]
-        ] = ["Total", 300]
+        # Create totals row by copying first row and modifying
+        totals_row = answer_invoice_pi1.iloc[[0]].copy()
+        for col in totals_row.columns:
+            totals_row[col] = ""
+        totals_row["Invoice Month"] = "Total"
+        totals_row["Balance"] = 300
+        answer_invoice_pi1 = pandas.concat(
+            [answer_invoice_pi1, totals_row], ignore_index=True
+        )
+
+        # Apply dollar formatting
         for column_name in [
             "Prepaid Group Balance",
             "Prepaid Group Used",
@@ -74,6 +81,7 @@ class TestPISpecificInvoice(TestCase):
             answer_invoice_pi1[column_name] = answer_invoice_pi1[column_name].apply(
                 add_dollar_sign
             )
+        answer_invoice_pi1 = answer_invoice_pi1.astype(pandas.StringDtype())
         answer_invoice_pi1.fillna("", inplace=True)
 
         answer_invoice_pi2 = (
@@ -81,10 +89,18 @@ class TestPISpecificInvoice(TestCase):
             .copy()
             .reset_index(drop=True)
         )
-        answer_invoice_pi2.loc[len(answer_invoice_pi2)] = None
-        answer_invoice_pi2.loc[
-            answer_invoice_pi2.index[-1], ["Invoice Month", "Balance"]
-        ] = ["Total", 700]
+
+        # Create totals row by copying first row and modifying to preserve formatting
+        totals_row = answer_invoice_pi2.iloc[[0]].copy()
+        for col in totals_row.columns:
+            totals_row[col] = ""
+        totals_row["Invoice Month"] = "Total"
+        totals_row["Balance"] = 700
+        answer_invoice_pi2 = pandas.concat(
+            [answer_invoice_pi2, totals_row], ignore_index=True
+        )
+
+        # Drop prepay columns (they're all NA for PI2)
         answer_invoice_pi2 = answer_invoice_pi2.drop(
             [
                 "Prepaid Group Name",
@@ -97,6 +113,7 @@ class TestPISpecificInvoice(TestCase):
         answer_invoice_pi2["Balance"] = answer_invoice_pi2["Balance"].apply(
             add_dollar_sign
         )
+        answer_invoice_pi2 = answer_invoice_pi2.astype(pandas.StringDtype())
         answer_invoice_pi2.fillna("", inplace=True)
 
         pi_inv = test_utils.new_pi_specific_invoice(data=test_invoice)
@@ -144,4 +161,29 @@ class TestPISpecificInvoice(TestCase):
                     f"--print-to-pdf={pi_pdf_path}",
                     "--no-pdf-header-footer",
                 ]
-                assert answer_arglist == chrome_arglist[0][:-1]
+
+                self.assertEqual(answer_arglist, chrome_arglist[0][:-1])
+
+    @mock.patch("process_report.invoices.invoice.Invoice._filter_columns")
+    @mock.patch("os.path.exists")
+    @mock.patch("subprocess.run")
+    def test_process_no_warnings(
+        self, mock_subprocess_run, mock_path_exists, mock_filter_cols
+    ):
+        """Test that no warnings are raised during invoice processing"""
+        invoice_month = "2024-10"
+        test_invoice = self._get_test_invoice(
+            ["PI1", "PI1", "PI2", "PI2"],
+            ["BU", "BU", "HU", "HU"],
+            [100, 200, 300, 400],
+            group_name=[None, "G1", None, None],
+        )
+        with tempfile.TemporaryDirectory() as test_dir:
+            pi_inv = test_utils.new_pi_specific_invoice(
+                test_dir, invoice_month, data=test_invoice
+            )
+            with self.assertNoLogs(
+                "process_report.invoices.pi_specific_invoice", level="WARNING"
+            ):
+                pi_inv.process()
+                pi_inv.export()
