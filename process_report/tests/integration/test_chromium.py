@@ -54,11 +54,11 @@ class TestPIInvoiceExport(BaseTestCaseWithTempDir):
 
         output_pdfs = os.listdir(self.tempdir)
 
-        self.assertEqual(["Test University_Jane Doe_2024-01.pdf"], output_pdfs)
+        assert output_pdfs == ["Test University_Jane Doe_2024-01.pdf"]
 
         # Validate the PDF header
         for pdf in output_pdfs:
             pdf_path = os.path.join(self.tempdir, pdf)
             with open(pdf_path, "rb") as f:
                 header = f.read(4)
-            self.assertEqual(header, b"%PDF")
+            assert header == b"%PDF"

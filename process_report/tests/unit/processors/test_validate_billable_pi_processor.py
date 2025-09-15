@@ -34,12 +34,10 @@ class TestValidateBillablePIProcessor(TestCase):
         validate_billable_pi_proc.process()
         data = validate_billable_pi_proc.data
         data = data[data["Is Billable"]]
-        self.assertTrue(data[data["Manager (PI)"].isin(nonbillable_pis)].empty)
-        self.assertTrue(
-            data[data["Project - Allocation"].isin(nonbillable_projects)].empty
-        )
-        self.assertTrue(data[data["Cluster Name"] == "ocp-test"].empty)
-        self.assertTrue(data["Manager (PI)"].tolist() == billable_pis)
+        assert data[data["Manager (PI)"].isin(nonbillable_pis)].empty
+        assert data[data["Project - Allocation"].isin(nonbillable_projects)].empty
+        assert data[data["Cluster Name"] == "ocp-test"].empty
+        assert data["Manager (PI)"].tolist() == billable_pis
 
     def test_empty_pi_name(self):
         test_data = pandas.DataFrame(
@@ -55,11 +53,11 @@ class TestValidateBillablePIProcessor(TestCase):
                 "Cluster Name": ["test-cluster"] * 5,
             }
         )
-        self.assertEqual(1, len(test_data[pandas.isna(test_data["Manager (PI)"])]))
+        assert len(test_data[pandas.isna(test_data["Manager (PI)"])]) == 1
         validate_billable_pi_proc = test_utils.new_validate_billable_pi_processor(
             data=test_data
         )
         validate_billable_pi_proc.process()
         output_data = validate_billable_pi_proc.data
         output_data = output_data[~output_data["Missing PI"]]
-        self.assertEqual(0, len(output_data[pandas.isna(output_data["Manager (PI)"])]))
+        assert len(output_data[pandas.isna(output_data["Manager (PI)"])]) == 0

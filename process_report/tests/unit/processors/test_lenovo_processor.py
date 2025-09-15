@@ -25,4 +25,4 @@ class TestLenovoProcessor(TestCase):
             data=test_invoice, su_charge_info=test_su_charge_info
         )
         lenovo_proc.process()
-        self.assertTrue(lenovo_proc.data.equals(answer_invoice))
+        assert lenovo_proc.data.equals(answer_invoice)

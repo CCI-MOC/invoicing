@@ -23,6 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install -r process_report/tests/test-requirements.txt
 
       - name: Download and install latest Chromium
         run: |
@@ -31,4 +32,4 @@ jobs:
 
       - name: Run integration tests
         run: |
-          python -m unittest discover -s process_report/tests/integration
+          python -m pytest process_report/tests/integration
