@@ -21,7 +21,7 @@ class TestBUSubsidyProcessor(TestCase):
         output_invoice = new_bu_subsidy_proc.data
         answer_invoice = answer_invoice.astype(output_invoice.dtypes)
 
-        self.assertTrue(output_invoice.equals(answer_invoice))
+        assert output_invoice.equals(answer_invoice)
 
     def _get_test_invoice(
         self,

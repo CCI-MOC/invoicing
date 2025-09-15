@@ -38,4 +38,4 @@ class TestCreditsSnapshot(TestCase):
         )
         output_snapshot = new_prepayment_proc._get_prepay_credits_snapshot()
 
-        self.assertTrue(answer_credits_snapshot.equals(output_snapshot))
+        assert answer_credits_snapshot.equals(output_snapshot)

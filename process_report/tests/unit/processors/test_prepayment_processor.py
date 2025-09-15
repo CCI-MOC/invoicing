@@ -36,8 +36,8 @@ class TestPrepaymentProcessor(BaseTestCaseWithTempDir):
             output_prepay_debits.dtypes
         ).sort_values(by="Month", ignore_index=True)
 
-        self.assertTrue(output_invoice.equals(answer_invoice))
-        self.assertTrue(output_prepay_debits.equals(answer_prepay_debits))
+        assert output_invoice.equals(answer_invoice)
+        assert output_prepay_debits.equals(answer_prepay_debits)
 
     def _get_test_invoice(self, project_names, pi_balances, balances=None):
         if not balances:

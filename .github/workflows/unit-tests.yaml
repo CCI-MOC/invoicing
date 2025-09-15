@@ -12,14 +12,15 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Set up python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.12'
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
+          pip install -r process_report/tests/test-requirements.txt
 
       - name: Run unit tests
         run: |
-          python -m unittest discover -s process_report/tests/unit
+          python -m pytest process_report/tests/unit

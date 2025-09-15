@@ -1,5 +1,6 @@
 from unittest import TestCase, mock
 import pandas
+import pytest
 
 from process_report.institute_list_models import InstituteList
 from process_report.tests import util as test_utils
@@ -40,19 +41,19 @@ class TestNERCRates(TestCase):
         # When no partnerships are active
         sample_proc.invoice_month = "2024-01"
         output_df = sample_proc._filter_partners(sample_df)
-        self.assertTrue(output_df.empty)
+        assert output_df.empty
 
         # When some partnerships are active
         sample_proc.invoice_month = "2024-06"
         output_df = sample_proc._filter_partners(sample_df)
         answer_df = pandas.DataFrame({"Institution": ["BU", "HU"]})
-        self.assertTrue(output_df.equals(answer_df))
+        assert output_df.equals(answer_df)
 
         # When all partnerships are active
         sample_proc.invoice_month = "2024-12"
         output_df = sample_proc._filter_partners(sample_df)
         answer_df = pandas.DataFrame({"Institution": ["BU", "HU", "NEU"]})
-        self.assertTrue(output_df.equals(answer_df))
+        assert output_df.equals(answer_df)
 
 
 class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
@@ -80,8 +81,8 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             by="PI", ignore_index=True
         )
 
-        self.assertTrue(output_invoice.equals(answer_invoice))
-        self.assertTrue(output_old_pi_df.equals(answer_old_pi_df))
+        assert output_invoice.equals(answer_invoice)
+        assert output_old_pi_df.equals(answer_old_pi_df)
 
     def _get_test_invoice(
         self, pi, cost, su_type=None, is_billable=None, missing_pi=None
@@ -525,5 +526,5 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         )
         invoice_month = "2024-03"
         test_invoice = test_utils.new_new_pi_credit_processor()
-        with self.assertRaises(SystemExit):
+        with pytest.raises(SystemExit):
             test_invoice._get_pi_age(old_pi_df, "PI1", invoice_month)

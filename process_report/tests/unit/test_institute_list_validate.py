@@ -1,4 +1,5 @@
 import yaml
+import pytest
 
 from process_report.institute_list_validate import main
 from process_report.tests.base import BaseTestCaseWithTempDir
@@ -39,5 +40,5 @@ class TestInstituteListValidate(BaseTestCaseWithTempDir):
         with open(test_file, "w") as f:
             yaml.dump(test_institute_list, f)
             f.flush()
-            with self.assertRaises(SystemExit):
+            with pytest.raises(SystemExit):
                 main(["--github", str(test_file)])

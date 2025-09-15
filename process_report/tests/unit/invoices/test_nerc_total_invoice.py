@@ -66,4 +66,4 @@ class TestNERCTotalInvoice(TestCase):
         )
         test_inv._prepare_export()
         output_invoice = test_inv.export_data
-        self.assertTrue(output_invoice.equals(answer_invoice))
+        assert output_invoice.equals(answer_invoice)
