@@ -66,15 +66,9 @@ class PrepaymentProcessor(discount_processor.DiscountProcessor):
         for _, group_info in self.prepay_contacts.iterrows():
             group_name = group_info[invoice.PREPAY_GROUP_NAME_FIELD]
             prepay_group_dict[group_name] = dict()
-<<<<<<< HEAD
             prepay_group_dict[group_name][invoice.PREPAY_GROUP_CONTACT_FIELD] = (
                 group_info[invoice.PREPAY_GROUP_CONTACT_FIELD]
             )
-=======
-            prepay_group_dict[group_name][
-                invoice.PREPAY_GROUP_CONTACT_FIELD
-            ] = group_info[invoice.PREPAY_GROUP_CONTACT_FIELD]
->>>>>>> 2728080 (Convert prepay managed field into Boolean)
             prepay_group_dict[group_name][invoice.PREPAY_MANAGED_FIELD] = (
                 group_info[invoice.PREPAY_MANAGED_FIELD].lower() == "yes"
             )
