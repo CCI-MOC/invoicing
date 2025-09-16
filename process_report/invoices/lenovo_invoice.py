@@ -15,6 +15,7 @@ class LenovoInvoice(invoice.Invoice):
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
+        invoice.CLUSTER_NAME_FIELD,
         invoice.INSTITUTION_FIELD,
         invoice.SU_HOURS_FIELD,
         invoice.SU_TYPE_FIELD,
