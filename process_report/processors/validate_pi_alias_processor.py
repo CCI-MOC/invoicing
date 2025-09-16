@@ -1,12 +1,13 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from process_report.loader import loader
 from process_report.invoices import invoice
 from process_report.processors import processor
 
 
 @dataclass
 class ValidatePIAliasProcessor(processor.Processor):
-    alias_map: dict
+    alias_map: dict[str, list[str]] = field(default_factory=loader.get_alias_map)
 
     def _validate_pi_aliases(self):
         for pi, pi_aliases in self.alias_map.items():

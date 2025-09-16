@@ -1,8 +1,5 @@
 from dataclasses import dataclass
 
-import pandas
-import pyarrow
-
 from process_report.invoices import invoice
 
 
@@ -14,11 +11,7 @@ class BillableInvoice(invoice.Invoice):
     - NewPICreditProcessor
     """
 
-    PI_S3_FILEPATH = "PIs/PI.csv"
-
-    old_pi_filepath: str
-    updated_old_pi_df: pandas.DataFrame
-
+    name: str = "billable"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
@@ -45,20 +38,3 @@ class BillableInvoice(invoice.Invoice):
         self.export_data = self.data[
             self.data[invoice.IS_BILLABLE_FIELD] & ~self.data[invoice.MISSING_PI_FIELD]
         ]
-        self.updated_old_pi_df = self.updated_old_pi_df.astype(
-            {
-                invoice.PI_INITIAL_CREDITS: pandas.ArrowDtype(
-                    pyarrow.decimal128(21, 2)
-                ),
-                invoice.PI_1ST_USED: pandas.ArrowDtype(pyarrow.decimal128(21, 2)),
-                invoice.PI_2ND_USED: pandas.ArrowDtype(pyarrow.decimal128(21, 2)),
-            },
-        )
-
-    def export(self):
-        super().export()
-        self.updated_old_pi_df.to_csv(self.old_pi_filepath, index=False)
-
-    def export_s3(self, s3_bucket):
-        super().export_s3(s3_bucket)
-        s3_bucket.upload_file(self.old_pi_filepath, self.PI_S3_FILEPATH)
