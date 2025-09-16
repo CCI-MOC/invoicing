@@ -1,5 +1,4 @@
 import os
-import sys
 from dataclasses import dataclass
 import subprocess
 import tempfile
@@ -13,7 +12,6 @@ import process_report.util as util
 
 
 TEMPLATE_DIR_PATH = "process_report/templates"
-CHROME_BIN_PATH = os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium")
 
 
 logger = logging.getLogger(__name__)
@@ -132,17 +130,12 @@ class PIInvoice(invoice.Invoice):
             temp_fd.flush()
 
         def _create_pdf_invoice(temp_fd_name):
-            if not os.path.exists(CHROME_BIN_PATH):
-                sys.exit(
-                    f"Chrome binary does not exist at {CHROME_BIN_PATH}. Make sure the env var CHROME_BIN_PATH is set correctly and that Google Chrome is installed"
-                )
-
             invoice_pdf_path = (
                 f"{self.name}/{pi_instituition}_{pi}_{self.invoice_month}.pdf"
             )
             subprocess.run(
                 [
-                    CHROME_BIN_PATH,
+                    os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium"),
                     "--headless",
                     "--no-sandbox",
                     f"--print-to-pdf={invoice_pdf_path}",

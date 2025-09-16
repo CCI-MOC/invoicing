@@ -1,9 +1,9 @@
+import os
 import tempfile
 from unittest import TestCase, mock
 import pandas
 
 from process_report.tests import util as test_utils
-from process_report.invoices.pi_specific_invoice import CHROME_BIN_PATH
 
 
 class TestPISpecificInvoice(TestCase):
@@ -155,7 +155,7 @@ class TestPISpecificInvoice(TestCase):
             for i, pi_pdf_path in enumerate([pi_pdf_1, pi_pdf_2]):
                 chrome_arglist, _ = mock_subprocess_run.call_args_list[i]
                 answer_arglist = [
-                    CHROME_BIN_PATH,
+                    os.environ.get("CHROME_BIN_PATH", "/usr/bin/chromium"),
                     "--headless",
                     "--no-sandbox",
                     f"--print-to-pdf={pi_pdf_path}",
