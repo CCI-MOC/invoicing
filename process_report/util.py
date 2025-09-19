@@ -27,8 +27,8 @@ def get_invoice_bucket():
             aws_secret_access_key=os.environ["S3_APP_KEY"],
         )
     except KeyError:
-        logger.error(
-            "Error: Please set the environment variables S3_KEY_ID and S3_APP_KEY"
+        raise RuntimeError(
+            "Please set the environment variables S3_KEY_ID and S3_APP_KEY"
         )
     return s3_resource.Bucket(os.environ.get("S3_BUCKET_NAME", "nerc-invoicing"))
 
