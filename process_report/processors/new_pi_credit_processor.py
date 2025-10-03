@@ -22,7 +22,12 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     """
 
     NEW_PI_CREDIT_CODE = "0002"
-    EXCLUDE_SU_TYPES = ["OpenShift GPUA100SXM4", "OpenStack GPUA100SXM4"]
+    EXCLUDE_SU_TYPES = [
+        "OpenShift GPUA100SXM4",
+        "OpenStack GPUA100SXM4",
+        "OpenShift GPUH100",
+        "OpenStack GPUH100",
+    ]
     IS_DISCOUNT_BY_NERC = True
 
     old_pi_filepath: str
