@@ -1,4 +1,5 @@
 *.csv
 !process_report/tests/e2e/test_data/*.csv
+!process_report/tests/e2e/test_data/test_invoices/*.csv
 __pycache__/
 *.py[cod]

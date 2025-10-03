@@ -5,6 +5,7 @@ import process_report.invoices.invoice as invoice
 
 @dataclass
 class OcpTestInvoice(invoice.Invoice):
+    name: str = "OCP_TEST"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

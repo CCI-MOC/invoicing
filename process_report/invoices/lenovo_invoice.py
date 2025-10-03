@@ -12,6 +12,7 @@ class LenovoInvoice(invoice.Invoice):
         "BM GPUH100",
     ]
 
+    name: str = "Lenovo"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

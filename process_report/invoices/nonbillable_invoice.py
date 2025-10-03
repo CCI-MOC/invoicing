@@ -5,9 +5,7 @@ import process_report.invoices.invoice as invoice
 
 @dataclass
 class NonbillableInvoice(invoice.Invoice):
-    nonbillable_pis: list[str]
-    nonbillable_projects: list[str]
-
+    name: str = "nonbillable"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,

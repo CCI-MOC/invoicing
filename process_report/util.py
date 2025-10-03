@@ -72,15 +72,6 @@ def get_month_diff(month_1, month_2):
     return (dt1.year - dt2.year) * 12 + (dt1.month - dt2.month)
 
 
-def process_and_export_invoices(invoice_list, upload_to_s3):
-    for invoice in invoice_list:
-        invoice.process()
-        invoice.export()
-        if upload_to_s3:
-            bucket = get_invoice_bucket()
-            invoice.export_s3(bucket)
-
-
 def fetch_s3(s3_filepath):
     local_name = os.path.basename(s3_filepath)
     invoice_bucket = get_invoice_bucket()

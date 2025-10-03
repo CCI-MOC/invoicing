@@ -1,8 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 
 import pandas
 
+from process_report.loader import loader
 from process_report.invoices import invoice
 from process_report.processors import processor
 
@@ -22,8 +23,10 @@ class ValidateBillablePIsProcessor(processor.Processor):
     Every project belonging to ocp-test is nonbillable.
     """
 
-    nonbillable_pis: list[str]
-    nonbillable_projects: list[str]
+    nonbillable_pis: list[str] = field(default_factory=loader.get_nonbillable_pis)
+    nonbillable_projects: list[str] = field(
+        default_factory=loader.get_nonbillable_projects
+    )
 
     @staticmethod
     def _validate_pi_names(data: pandas.DataFrame):
