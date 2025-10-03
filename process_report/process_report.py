@@ -205,7 +205,7 @@ def main():
     )
     args = parser.parse_args()
 
-    required_env_vars = []
+    required_env_vars = ["CHROME_BIN_PATH"]
     if not args.coldfront_data_file:
         required_env_vars.extend(["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"])
     validate_required_env_vars(required_env_vars)
