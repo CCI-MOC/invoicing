@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 CF_ATTR_ALLOCATED_PROJECT_NAME = "Allocated Project Name"
 CF_ATTR_ALLOCATED_PROJECT_ID = "Allocated Project ID"
 CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
+CF_ATTR_IS_COURSE = "Is Course?"
 
 
 @dataclass
@@ -96,10 +97,15 @@ class ColdfrontFetchProcessor(processor.Processor):
                 institute_code = project_dict["attributes"].get(
                     CF_ATTR_INSTITUTION_SPECIFIC_CODE, "N/A"
                 )
+                is_course = (
+                    project_dict["attributes"].get(CF_ATTR_IS_COURSE, "No").lower()
+                    == "yes"
+                )
                 allocation_data[project_id] = {
                     invoice.PROJECT_FIELD: project_name,
                     invoice.PI_FIELD: pi_name,
                     invoice.INSTITUTION_ID_FIELD: institute_code,
+                    invoice.IS_COURSE_FIELD: is_course,
                 }
             except KeyError:
                 continue
@@ -120,6 +126,7 @@ class ColdfrontFetchProcessor(processor.Processor):
             )
 
     def _apply_allocation_data(self, allocation_data):
+        self.data[invoice.IS_COURSE_FIELD] = False
         for project_id, data in allocation_data.items():
             mask = self.data[invoice.PROJECT_ID_FIELD] == project_id
             self.data.loc[mask, invoice.PROJECT_FIELD] = data[invoice.PROJECT_FIELD]
@@ -127,6 +134,7 @@ class ColdfrontFetchProcessor(processor.Processor):
             self.data.loc[mask, invoice.INSTITUTION_ID_FIELD] = data[
                 invoice.INSTITUTION_ID_FIELD
             ]
+            self.data.loc[mask, invoice.IS_COURSE_FIELD] = data[invoice.IS_COURSE_FIELD]
 
     def _process(self):
         api_data = self._get_coldfront_api_data()

@@ -56,6 +56,7 @@ class ValidateBillablePIsProcessor(processor.Processor):
             .apply(_str_to_lowercase)
             .isin(nonbillable_projects_lowercase)
             & ~data[invoice.CLUSTER_NAME_FIELD].isin(NONBILLABLE_CLUSTERS)
+            & ~data[invoice.IS_COURSE_FIELD]
         )
 
     def _process(self):
