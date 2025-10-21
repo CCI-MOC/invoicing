@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import pandas
+import os
 
 import process_report.util as util
 
@@ -123,3 +124,20 @@ class Invoice:
     def export_s3(self, s3_bucket):
         s3_bucket.upload_file(self.output_path, self.output_s3_key)
         s3_bucket.upload_file(self.output_path, self.output_s3_archive_key)
+
+    def fetch(self, s3_bucket=None):
+        """Fetches the exported invoice CSV from S3 and loads it into self.data.
+
+        If s3_bucket is not provided, uses the default invoice bucket.
+        The CSV is downloaded to the current working directory using its base filename.
+        """
+        s3_key = self.output_s3_key
+        local_filename = os.path.basename(s3_key)
+
+        if s3_bucket is None:
+            # Fallback to default bucket utility which also downloads
+            util.fetch_s3(s3_key)
+        else:
+            s3_bucket.download_file(s3_key, local_filename)
+
+        self.data = pandas.read_csv(local_filename)
