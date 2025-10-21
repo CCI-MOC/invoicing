@@ -1,5 +1,6 @@
 from typing import Annotated
 import datetime
+import functools
 
 import pydantic
 import validators
@@ -30,6 +31,7 @@ class InstituteInfo(pydantic.BaseModel):
     domains: list[DomainField]
     mghpcc_partnership_start_date: DateField | None = None
     include_in_nerc_total_invoice: bool = False
+    courses_nonbillable: bool = False
 
     model_config = pydantic.ConfigDict(extra="forbid")
 
@@ -59,3 +61,12 @@ class InstituteList(pydantic.RootModel):
                 domain_name_set.add(domain)
 
         return self
+
+    @functools.cached_property
+    def nonbillable_course_list(self) -> list[str]:
+        """List of institutions, by `display_name`, whose courses are nonbillable"""
+        institute_list = []
+        for institute_info in self.root:
+            if institute_info.courses_nonbillable:
+                institute_list.append(institute_info.display_name)
+        return institute_list
