@@ -6,6 +6,7 @@ import pandas
 from process_report.loader import loader
 from process_report.invoices import invoice
 from process_report.processors import processor
+from process_report import util
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -47,6 +48,8 @@ class ValidateBillablePIsProcessor(processor.Processor):
         def _str_to_lowercase(data):
             return data.lower()
 
+        institute_list = util.load_institute_list()
+
         nonbillable_projects_lowercase = [
             project.lower() for project in nonbillable_projects
         ]
@@ -56,6 +59,12 @@ class ValidateBillablePIsProcessor(processor.Processor):
             .apply(_str_to_lowercase)
             .isin(nonbillable_projects_lowercase)
             & ~data[invoice.CLUSTER_NAME_FIELD].isin(NONBILLABLE_CLUSTERS)
+            & ~(
+                data[invoice.IS_COURSE_FIELD]
+                & data[invoice.INSTITUTION_FIELD].isin(
+                    institute_list.nonbillable_course_list
+                )
+            )
         )
 
     def _process(self):

@@ -13,6 +13,7 @@ class TestColdfrontFetchProcessor(TestCase):
         pi=None,
         institute_code=None,
         cluster_name=None,
+        is_course=None,
     ):
         if not pi:
             pi = [""] * len(allocation_project_id)
@@ -26,6 +27,9 @@ class TestColdfrontFetchProcessor(TestCase):
         if not cluster_name:
             cluster_name = [""] * len(allocation_project_id)
 
+        if not is_course:
+            is_course = [None] * len(allocation_project_id)
+
         return pandas.DataFrame(
             {
                 "Manager (PI)": pi,
@@ -33,24 +37,30 @@ class TestColdfrontFetchProcessor(TestCase):
                 "Project - Allocation ID": allocation_project_id,
                 "Institution - Specific Code": institute_code,
                 "Cluster Name": cluster_name,
+                "Is Course": is_course,
             }
         )
 
-    def _get_mock_allocation_data(self, project_id_list, pi_list, institute_code_list):
+    def _get_mock_allocation_data(
+        self, project_id_list, pi_list, institute_code_list, is_course_list=None
+    ):
         mock_data = []
         for i, project in enumerate(project_id_list):
-            mock_data.append(
-                {
-                    "project": {
-                        "pi": pi_list[i],
-                    },
-                    "attributes": {
-                        "Allocated Project ID": project,
-                        "Allocated Project Name": f"{project}-name",
-                        "Institution-Specific Code": institute_code_list[i],
-                    },
-                }
-            )
+            mock_project_dict = {
+                "project": {
+                    "pi": pi_list[i],
+                },
+                "attributes": {
+                    "Allocated Project ID": project,
+                    "Allocated Project Name": f"{project}-name",
+                    "Institution-Specific Code": institute_code_list[i],
+                },
+            }
+
+            if is_course_list:
+                mock_project_dict["attributes"]["Is Course?"] = is_course_list[i]
+
+            mock_data.append(mock_project_dict)
 
         return mock_data
 
@@ -69,6 +79,7 @@ class TestColdfrontFetchProcessor(TestCase):
             ["P1-name", "P1-name", "P2-name", "P3-name", "P4-name"],
             ["PI1", "PI1", "PI1", "", "PI12"],
             ["IC1", "IC1", "", "", "IC2"],
+            is_course=[False] * 5,
         )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice
@@ -122,6 +133,62 @@ class TestColdfrontFetchProcessor(TestCase):
             ["PI1", "PI1", "", ""],
             ["IC1", "IC2", "", ""],
             ["ocp-prod", "stack", "ocp-test", "ocp-test"],
+            [False] * 4,
+        )
+        test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
+            data=test_invoice
+        )
+        test_coldfront_fetch_proc.process()
+        output_invoice = test_coldfront_fetch_proc.data
+        assert output_invoice.equals(answer_invoice)
+
+    @mock.patch(
+        "process_report.processors.coldfront_fetch_processor.ColdfrontFetchProcessor._fetch_coldfront_allocation_api",
+    )
+    def test_is_course_default_false(self, mock_get_allocation_data):
+        """If 'Is Course?' is not set in the API data, the output 'Is Course' column is False"""
+        mock_get_allocation_data.return_value = self._get_mock_allocation_data(
+            ["P1", "P2"],
+            ["PI1", "PI2"],
+            ["IC1", "IC2"],
+        )
+        test_invoice = self._get_test_invoice(
+            ["P1", "P2", "P3"]
+        )  # P3 not in Coldfront API data
+        answer_invoice = self._get_test_invoice(
+            ["P1", "P2", "P3"],
+            ["P1-name", "P2-name", ""],
+            ["PI1", "PI2", ""],
+            ["IC1", "IC2", ""],
+            ["", "", ""],
+            [False, False, False],
+        )
+        test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
+            data=test_invoice, nonbillable_projects=["P3"]
+        )
+        test_coldfront_fetch_proc.process()
+        output_invoice = test_coldfront_fetch_proc.data
+        assert output_invoice.equals(answer_invoice)
+
+    @mock.patch(
+        "process_report.processors.coldfront_fetch_processor.ColdfrontFetchProcessor._fetch_coldfront_allocation_api",
+    )
+    def test_is_course_values(self, mock_get_allocation_data):
+        """If 'Is Course?' is set in the API data, the output 'Is Course' column reflects True/False"""
+        mock_get_allocation_data.return_value = self._get_mock_allocation_data(
+            ["P1", "P2", "P3"],
+            ["PI1", "PI2", "PI3"],
+            ["IC1", "IC2", "IC3"],
+            is_course_list=["Yes", "No", "yes"],
+        )
+        test_invoice = self._get_test_invoice(["P1", "P2", "P3"])
+        answer_invoice = self._get_test_invoice(
+            ["P1", "P2", "P3"],
+            ["P1-name", "P2-name", "P3-name"],
+            ["PI1", "PI2", "PI3"],
+            ["IC1", "IC2", "IC3"],
+            ["", "", ""],
+            [True, False, True],
         )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
             data=test_invoice
