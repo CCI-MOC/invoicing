@@ -21,7 +21,7 @@ class TestColdfrontFetchProcessor(TestCase):
             institute_code = [""] * len(allocation_project_id)
 
         if not allocation_project_name:
-            allocation_project_name = [""] * len(allocation_project_id)
+            allocation_project_name = allocation_project_id
 
         if not cluster_name:
             cluster_name = [""] * len(allocation_project_id)
@@ -87,7 +87,13 @@ class TestColdfrontFetchProcessor(TestCase):
             ["PI1", "PI1"],
             ["IC1", "IC2"],
         )
-        test_nonbillable_projects = ["P3"]
+        test_nonbillable_projects = pandas.DataFrame(
+            {
+                "Project Name": ["P3"],
+                "Cluster": [None],
+                "Is Timed": [False],
+            }
+        )
         test_invoice = self._get_test_invoice(["P1", "P2", "P3", "P4", "P5"])
         answer_project_set = ["P4", "P5"]
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
@@ -97,6 +103,7 @@ class TestColdfrontFetchProcessor(TestCase):
         with pytest.raises(ValueError) as cm:
             test_coldfront_fetch_proc.process()
 
+        print(cm.value)
         assert str(cm.value) == (
             f"Projects {answer_project_set} not found in Coldfront and are billable! Please check the project names"
         )
@@ -113,12 +120,12 @@ class TestColdfrontFetchProcessor(TestCase):
             ["IC1", "IC2"],
         )
         test_invoice = self._get_test_invoice(
-            ["P1", "P2", "P3", "P4"],
+            allocation_project_id=["P1", "P2", "P3", "P4"],
             cluster_name=["ocp-prod", "stack", "ocp-test", "ocp-test"],
         )
         answer_invoice = self._get_test_invoice(
             ["P1", "P2", "P3", "P4"],
-            ["P1-name", "P2-name", "", ""],
+            ["P1-name", "P2-name", "P3", "P4"],
             ["PI1", "PI1", "", ""],
             ["IC1", "IC2", "", ""],
             ["ocp-prod", "stack", "ocp-test", "ocp-test"],
