@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass, field
 
 import requests
+import pandas
 
 from process_report.loader import loader
 from process_report.settings import invoice_settings
@@ -23,7 +24,7 @@ CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
-    nonbillable_projects: list[str] = field(
+    nonbillable_projects: pandas.DataFrame = field(
         default_factory=loader.get_nonbillable_projects
     )
     coldfront_data_filepath: str = invoice_settings.coldfront_api_filepath
@@ -57,12 +58,12 @@ class ColdfrontFetchProcessor(processor.Processor):
         session.headers.update(headers)
         return session
 
-    def _get_project_id_list(self):
-        """Returns list of project IDs from billable clusters"""
-        nonbillable_cluster_mask = ~self.data[invoice.CLUSTER_NAME_FIELD].isin(
-            validate_billable_pi_processor.NONBILLABLE_CLUSTERS
+    def _get_project_name_list(self) -> list[str]:
+        """Returns list of billable project IDs"""
+        project_mask = validate_billable_pi_processor.find_billable_projects(
+            self.data, self.nonbillable_projects
         )
-        return self.data[nonbillable_cluster_mask][invoice.PROJECT_ID_FIELD].unique()
+        return self.data[project_mask][invoice.PROJECT_FIELD].unique().tolist()
 
     def _fetch_coldfront_allocation_api(self):
         coldfront_api_url = os.environ.get(
@@ -107,11 +108,14 @@ class ColdfrontFetchProcessor(processor.Processor):
         return allocation_data
 
     def _validate_allocation_data(self, allocation_data):
-        missing_projects = (
-            set(self._get_project_id_list())
-            - set(allocation_data.keys())
-            - set(self.nonbillable_projects)
-        )
+        # TODO (Quan): If two Coldfront projects have the same name
+        # (maybe because they exist on different clusters),
+        # the `allocation_data` dict will only accurately store info for one of the projects
+        # Would this be a concern?
+        allocation_project_names = {
+            data[invoice.PROJECT_FIELD] for data in allocation_data.values()
+        }
+        missing_projects = set(self._get_project_name_list()) - allocation_project_names
         missing_projects = list(missing_projects)
         missing_projects.sort()  # Ensures order for testing purposes
         if missing_projects:
@@ -131,5 +135,7 @@ class ColdfrontFetchProcessor(processor.Processor):
     def _process(self):
         api_data = self._get_coldfront_api_data()
         allocation_data = self._get_allocation_data(api_data)
-        self._validate_allocation_data(allocation_data)
+
+        #
         self._apply_allocation_data(allocation_data)
+        self._validate_allocation_data(allocation_data)
