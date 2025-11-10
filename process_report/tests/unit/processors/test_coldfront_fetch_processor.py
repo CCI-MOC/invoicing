@@ -42,14 +42,19 @@ class TestColdfrontFetchProcessor(TestCase):
         )
 
     def _get_mock_allocation_data(
-        self, project_id_list, pi_list, institute_code_list, cluster_list, is_course_list=None
+        self,
+        project_id_list,
+        pi_list,
+        institute_code_list,
+        cluster_list,
+        is_course_list=None,
     ):
         mock_data = []
         for i, project in enumerate(project_id_list):
             mock_project_dict = {
-                 "resource": {
-                        "name": cluster_list[i],
-                    },
+                "resource": {
+                    "name": cluster_list[i],
+                },
                 "project": {
                     "pi": pi_list[i],
                 },
@@ -168,18 +173,26 @@ class TestColdfrontFetchProcessor(TestCase):
             ["stack", "stack"],
         )
         test_invoice = self._get_test_invoice(
-            ["P1", "P2", "P3"]
+            ["P1", "P2", "P3"],
+            cluster_name=["stack", "stack", ""],
         )  # P3 not in Coldfront API data
         answer_invoice = self._get_test_invoice(
             ["P1", "P2", "P3"],
-            ["P1-name", "P2-name", ""],
+            ["P1-name", "P2-name", "P3"],
             ["PI1", "PI2", ""],
             ["IC1", "IC2", ""],
-            ["", "", ""],
+            ["stack", "stack", ""],
             [False, False, False],
         )
+        nonbillable_projects = pandas.DataFrame(
+            {
+                "Project Name": ["P3"],
+                "Cluster": [None],
+                "Is Timed": [False],
+            }
+        )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
-            data=test_invoice, nonbillable_projects=["P3"]
+            data=test_invoice, nonbillable_projects=nonbillable_projects
         )
         test_coldfront_fetch_proc.process()
         output_invoice = test_coldfront_fetch_proc.data
@@ -197,13 +210,15 @@ class TestColdfrontFetchProcessor(TestCase):
             ["stack", "stack", "stack"],
             is_course_list=["Yes", "No", "yes"],
         )
-        test_invoice = self._get_test_invoice(["P1", "P2", "P3"])
+        test_invoice = self._get_test_invoice(
+            ["P1", "P2", "P3"], cluster_name=["stack", "stack", "stack"]
+        )
         answer_invoice = self._get_test_invoice(
             ["P1", "P2", "P3"],
             ["P1-name", "P2-name", "P3-name"],
             ["PI1", "PI2", "PI3"],
             ["IC1", "IC2", "IC3"],
-            ["", "", ""],
+            ["stack", "stack", "stack"],
             [True, False, True],
         )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(

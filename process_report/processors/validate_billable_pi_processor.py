@@ -115,7 +115,6 @@ class ValidateBillablePIsProcessor(processor.Processor):
     ):
         institute_list = util.load_institute_list()
 
-        print(data)
         pi_mask = ~data[invoice.PI_FIELD].isin(nonbillable_pis)
         project_mask = find_billable_projects(data, nonbillable_projects)
         courses_mask = ~(

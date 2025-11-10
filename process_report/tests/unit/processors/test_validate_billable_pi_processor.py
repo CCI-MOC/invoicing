@@ -112,7 +112,7 @@ class TestValidateBillablePIProcessor(TestCase):
         )
 
         validate_proc = test_utils.new_validate_billable_pi_processor(
-            data=test_data, nonbillable_pis=[], nonbillable_projects=[]
+            data=test_data,
         )
         validate_proc.process()
         output = validate_proc.data
