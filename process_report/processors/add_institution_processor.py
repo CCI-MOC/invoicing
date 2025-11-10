@@ -27,7 +27,6 @@ class AddInstitutionProcessor(processor.Processor):
         The list of mappings are defined in `institute_map.json`.
         """
         institute_list = util.load_institute_list()
-        institute_map = util.get_institute_mapping(institute_list)
         self.data = self.data.astype({invoice.INSTITUTION_FIELD: "str"})
         for i, row in self.data.iterrows():
             pi_name = row[invoice.PI_FIELD]
@@ -35,7 +34,7 @@ class AddInstitutionProcessor(processor.Processor):
                 logger.info(f"Project {row[invoice.PROJECT_FIELD]} has no PI")
             else:
                 self.data.at[i, invoice.INSTITUTION_FIELD] = (
-                    util.get_institution_from_pi(institute_map, pi_name)
+                    institute_list.get_institution_from_pi(pi_name)
                 )
 
     def _process(self):
