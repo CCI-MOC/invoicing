@@ -7,6 +7,7 @@
     - bu.edu
     mghpcc_partnership_start_date: "2013-06"
     include_in_nerc_total_invoice: True
+    courses_nonbillable: True
 -   display_name: Bentley
     domains:
     - bentley.edu

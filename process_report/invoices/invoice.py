@@ -56,6 +56,7 @@ PI_BALANCE_FIELD = "PI Balance"
 PROJECT_NAME_FIELD = "Project"
 GROUP_MANAGED_FIELD = "MGHPCC Managed"
 CLUSTER_NAME_FIELD = "Cluster Name"
+IS_COURSE_FIELD = "Is Course"
 ###
 
 
