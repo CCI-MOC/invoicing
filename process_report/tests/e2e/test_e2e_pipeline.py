@@ -46,7 +46,15 @@ def test_data_dir() -> Path:
     return Path(__file__).parent / "test_data"
 
 
-def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
+@pytest.fixture
+def test_invoice_dir(test_data_dir) -> Path:
+    """Get the directory containing test invoice files."""
+    return test_data_dir / "test_invoices"
+
+
+def _setup_workspace(
+    test_data_dir: Path, test_invoice_dir: Path, project_root: Path, workspace: Path
+):
     """Set up the workspace by collecting absolute paths to test data files.
 
     Args:
@@ -61,6 +69,8 @@ def _setup_workspace(test_data_dir: Path, project_root: Path, workspace: Path):
     test_files = {}
     for test_file in test_data_dir.glob("*"):
         test_files[test_file.name] = test_file.absolute()
+
+    test_files["test_invoice_dir"] = test_invoice_dir.absolute()
 
     process_report_dir = workspace / "process_report"
     process_report_dir.mkdir(exist_ok=True)
@@ -97,36 +107,29 @@ def _prepare_pipeline_execution(
         "python",
         "-m",
         "process_report.process_report",
-        "--invoice-month",
-        INVOICE_MONTH,
-        "--pi-file",
-        str(test_files["test_pi.txt"]),
-        "--projects-file",
-        str(test_files["test_projects.txt"]),
-        "--timed-projects-file",
-        str(test_files["test_timed_projects.txt"]),
-        "--BU-subsidy-amount",
-        "100",
-        "--old-pi-file",
-        str(test_files["test_PI.csv"]),
-        "--alias-file",
-        str(test_files["test_alias.csv"]),
-        "--prepay-debits",
-        str(test_files["test_prepay_debits.csv"]),
-        "--prepay-credits",
-        str(test_files["test_prepay_credits.csv"]),
-        "--prepay-projects",
-        str(test_files["test_prepay_projects.csv"]),
-        "--coldfront-data-file",
-        str(test_files["test_coldfront_api_data.json"]),
-        str(test_files["test_nerc-ocp-test 2025-04.csv"]),
-        str(test_files["test_NERC OpenShift 2025-04.csv"]),
-        "--prepay-contacts",
-        str(test_files["test_prepay_contacts.csv"]),
     ]
 
     # Environment setup for subprocess execution
     env = os.environ.copy()
+    env["INVOICE_MONTH"] = INVOICE_MONTH
+    env["COLDFRONT_API_FILEPATH"] = str(test_files["test_coldfront_api_data.json"])
+    env["FETCH_FROM_S3"] = "false"
+    env["UPLOAD_TO_S3"] = "false"
+    env["invoice_path_template"] = str(test_files["test_invoice_dir"])
+
+    env["PI_REMOTE_FILEPATH"] = str(test_files["test_PI.csv"])
+    env["ALIAS_REMOTE_FILEPATH"] = str(test_files["test_alias.csv"])
+    env["PREPAY_DEBITS_REMOTE_FILEPATH"] = str(test_files["test_prepay_debits.csv"])
+
+    env["PREPAY_CREDITS_FILEPATH"] = str(test_files["test_prepay_credits.csv"])
+    env["PREPAY_PROJECTS_FILEPATH"] = str(test_files["test_prepay_projects.csv"])
+    env["PREPAY_CONTACTS_FILEPATH"] = str(test_files["test_prepay_contacts.csv"])
+    env["nonbillable_pis_filepath"] = str(test_files["test_pi.txt"])
+    env["nonbillable_projects_filepath"] = str(test_files["test_projects.txt"])
+    env["nonbillable_timed_projects_filepath"] = str(
+        test_files["test_timed_projects.txt"]
+    )
+
     # Fallback ensures test works even when CI environment doesn't set Chrome path
     env.setdefault("CHROME_BIN_PATH", "/usr/bin/chromium")
     env["PYTHONPATH"] = str(project_root) + ":" + env.get("PYTHONPATH", "")
@@ -217,7 +220,7 @@ def _validate_outputs(workspace: Path) -> None:
 
 
 def test_e2e_pipeline_execution(
-    project_root: Path, test_data_dir: Path, tmp_path: Path
+    project_root: Path, test_data_dir: Path, test_invoice_dir: Path, tmp_path: Path
 ):
     """
     Validates the full pipeline runs without errors and produces expected outputs.
@@ -226,7 +229,9 @@ def test_e2e_pipeline_execution(
     """
     workspace = tmp_path
 
-    test_files = _setup_workspace(test_data_dir, project_root, workspace)
+    test_files = _setup_workspace(
+        test_data_dir, test_invoice_dir, project_root, workspace
+    )
 
     command, env = _prepare_pipeline_execution(test_files, workspace, project_root)
 

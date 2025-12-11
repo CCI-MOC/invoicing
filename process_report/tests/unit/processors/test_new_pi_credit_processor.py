@@ -465,13 +465,13 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
         invoice_month = "2024-06"
         test_invoice = self._get_test_invoice(
-            ["PI", "PI", "PI", "PI"],
+            ["PI", "PI", "PI", "PI2"],
             [600, 600, 600, 600],
             [
                 "CPU",
                 "OpenShift GPUA100SXM4",
                 "GPU",
-                "OpenStack GPUA100SXM4",
+                "OpenStack GPUH100",
             ],
         )
         test_old_pi_file = self.tempdir / "old_pi.csv"

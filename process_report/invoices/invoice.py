@@ -64,9 +64,9 @@ class Invoice:
     export_columns_list = list()
     exported_columns_map = dict()
 
-    name: str
     invoice_month: str
     data: pandas.DataFrame
+    name: str = ""
     export_data = None
 
     def process(self):

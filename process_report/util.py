@@ -27,8 +27,8 @@ def get_invoice_bucket():
             aws_secret_access_key=os.environ["S3_APP_KEY"],
         )
     except KeyError:
-        logger.error(
-            "Error: Please set the environment variables S3_KEY_ID and S3_APP_KEY"
+        raise RuntimeError(
+            "Please set the environment variables S3_KEY_ID and S3_APP_KEY"
         )
     return s3_resource.Bucket(os.environ.get("S3_BUCKET_NAME", "nerc-invoicing"))
 
@@ -70,15 +70,6 @@ def get_month_diff(month_1, month_2):
     dt1 = datetime.datetime.strptime(month_1, "%Y-%m")
     dt2 = datetime.datetime.strptime(month_2, "%Y-%m")
     return (dt1.year - dt2.year) * 12 + (dt1.month - dt2.month)
-
-
-def process_and_export_invoices(invoice_list, upload_to_s3):
-    for invoice in invoice_list:
-        invoice.process()
-        invoice.export()
-        if upload_to_s3:
-            bucket = get_invoice_bucket()
-            invoice.export_s3(bucket)
 
 
 def fetch_s3(s3_filepath):

@@ -5,14 +5,13 @@ import process_report.invoices.invoice as invoice
 
 @dataclass
 class NonbillableInvoice(invoice.Invoice):
-    nonbillable_pis: list[str]
-    nonbillable_projects: list[str]
-
+    name: str = "nonbillable"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PROJECT_FIELD,
         invoice.PROJECT_ID_FIELD,
         invoice.PI_FIELD,
+        invoice.CLUSTER_NAME_FIELD,
         invoice.INVOICE_EMAIL_FIELD,
         invoice.INVOICE_ADDRESS_FIELD,
         invoice.INSTITUTION_FIELD,

@@ -11,9 +11,11 @@ class BUInternalInvoice(invoice.Invoice):
     - NewPICreditProcessor
     """
 
+    name: str = "BU_Internal"
     export_columns_list = [
         invoice.INVOICE_DATE_FIELD,
         invoice.PI_FIELD,
+        invoice.CLUSTER_NAME_FIELD,
         invoice.PROJECT_NAME_FIELD,
         invoice.GROUP_NAME_FIELD,
         invoice.GROUP_INSTITUTION_FIELD,
