@@ -10,6 +10,7 @@ from process_report.loader import loader
 from process_report import util
 from process_report.invoices import (
     invoice,
+    bm_invoice,
     lenovo_invoice,
     nonbillable_invoice,
     billable_invoice,
@@ -30,6 +31,7 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
     validate_cluster_name_processor,
+    bm_usage_processor,
 )
 
 
@@ -71,6 +73,7 @@ def main():
             validate_cluster_name_processor.ValidateClusterNameProcessor,
             coldfront_fetch_processor.ColdfrontFetchProcessor,
             validate_pi_alias_processor.ValidatePIAliasProcessor,
+            bm_usage_processor.BMUsageProcessor,
             add_institution_processor.AddInstitutionProcessor,
             lenovo_processor.LenovoProcessor,
             validate_billable_pi_processor.ValidateBillablePIsProcessor,
@@ -94,6 +97,7 @@ def main():
             MOCA_prepaid_invoice.MOCAPrepaidInvoice,
             prepay_credits_snapshot.PrepayCreditsSnapshot,
             ocp_test_invoice.OcpTestInvoice,
+            bm_invoice.BMInvoice,
         ],
         invoice_settings.upload_to_s3,
     )

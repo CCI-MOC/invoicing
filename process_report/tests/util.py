@@ -16,6 +16,7 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
     validate_cluster_name_processor,
+    bm_usage_processor,
 )
 
 
@@ -200,4 +201,18 @@ def new_validate_cluster_name_processor(
 ):
     return validate_cluster_name_processor.ValidateClusterNameProcessor(
         invoice_month, data, name
+    )
+
+
+def new_bm_usage_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return bm_usage_processor.BMUsageProcessor(
+        invoice_month,
+        data,
+        name,
     )

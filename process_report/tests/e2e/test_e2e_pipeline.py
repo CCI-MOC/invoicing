@@ -21,6 +21,7 @@ EXPECTED_CSV_FILES = [
     "MOCA-A_Prepaid_Groups-2025-06-Invoice.csv",
     "NERC_Prepaid_Group-Credits-2025-06.csv",
     "OCP_TEST 2025-06.csv",
+    "bm_projects 2025-06.csv",
 ]
 
 EXPECTED_DIRECTORIES = ["pi_invoices"]
