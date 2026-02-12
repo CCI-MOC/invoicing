@@ -1,5 +1,5 @@
 nerc-rates>=1.0.1,<2.0.0
-pandas
+pandas>=3.0,<4.0
 pyarrow
 boto3>=1.42.6,<2.0
 Jinja2
