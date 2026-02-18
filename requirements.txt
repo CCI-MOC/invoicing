@@ -1,6 +1,7 @@
 nerc-rates>=1.0.1,<2.0.0
 pandas
 pyarrow
+pyiceberg[pyarrow]>=0.11.0
 boto3>=1.42.6,<2.0
 Jinja2
 validators
