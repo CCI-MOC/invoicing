@@ -1,12 +1,13 @@
 import functools
-from decimal import Decimal
 import logging
 
 import pandas as pd
-from pyiceberg.expressions import And, BooleanExpression, EqualTo
+import pyarrow
+from pyiceberg.expressions import AlwaysTrue, BooleanExpression, EqualTo
+from pyiceberg.table import StaticTable
 
 import process_report.invoices.invoice as invoice
-from process_report.data_tools.config import get_table
+from process_report.data_tools.config import data_tools_settings
 
 logger = logging.getLogger(__name__)
 FilterValue = str | int | float
@@ -14,27 +15,34 @@ FilterValue = str | int | float
 _LIFETIME_COLS = [
     invoice.PROJECT_ID_FIELD,
     invoice.CLUSTER_NAME_FIELD,
-    invoice.BALANCE_FIELD,
+    invoice.COST_FIELD,
 ]
 
 
-def _row_filter(**filters: FilterValue) -> BooleanExpression | None:
-    """Build a PyIceberg row filter expression from column=value filters.
+def _row_filter(**filters: FilterValue) -> BooleanExpression:
+    """Combine column equality checks into a single PyIceberg filter expression.
+
+    Each keyword argument becomes one equality check (column == value).
+    Multiple checks are joined with AND.
 
     Args:
         **filters: Column names as keys, values to filter by. Values must be str, int, or float.
 
     Returns:
-        PyIceberg BooleanExpression like EqualTo(col1, 'x') AND EqualTo(col2, 1),
-        or None if no filters are given.
+        A PyIceberg BooleanExpression combining all checks, or None if no filters were given.
     """
-    if not filters:
-        return None
-    expression: BooleanExpression | None = None
+    expression: BooleanExpression = AlwaysTrue()
     for col, val in filters.items():
-        clause = EqualTo(col, val)
-        expression = clause if expression is None else And(expression, clause)
+        expression = expression & EqualTo(col, val)
     return expression
+
+
+@functools.cache
+def get_table() -> StaticTable:
+    return StaticTable.from_metadata(
+        data_tools_settings.table_path,
+        properties=data_tools_settings.iceberg_s3_properties(),
+    )
 
 
 @functools.cache
@@ -44,18 +52,14 @@ def get_invoice_dataframe(
     """Load invoice data from the Iceberg table.
 
     Args:
-        cols: Column names to select as a tuple. None selects all columns.
+        cols: Column names to select as a tuple. Defaults to selects all columns.
         **filters: Column names as keys, values to filter by. Values must be str, int, or float.
 
     Returns:
         DataFrame of invoice data from the table.
     """
     table = get_table()
-    row_filter = _row_filter(**filters)
-    if row_filter:
-        scan = table.scan(row_filter=row_filter)
-    else:
-        scan = table.scan()
+    scan = table.scan(row_filter=_row_filter(**filters))
     if cols:
         scan = scan.select(*cols)
     df = scan.to_pandas()
@@ -81,15 +85,27 @@ def group_and_sum(
 
     Returns:
         DataFrame with one row per group and a column containing the sum of agg_col.
+
+    Raises:
+        ValueError: If agg_col is not present in df.
+        TypeError: If unable to cast agg_col to decimal128
     """
+    if agg_col not in df.columns:
+        raise ValueError(
+            f"Aggregation column '{agg_col}' not found in dataframe. "
+            f"Available columns: {list(df.columns)}"
+        )
+
+    decimal_dtype = pd.ArrowDtype(pyarrow.decimal128(21, 2))
     grouped_input = df.copy()
-    grouped_input[agg_col] = grouped_input[agg_col].fillna(0)
+
+    try:
+        grouped_input[agg_col] = grouped_input[agg_col].fillna(0).astype(decimal_dtype)
+    except pyarrow.ArrowException as e:
+        raise TypeError(f"Unable to cast column {agg_col} to decimal: {e}")
+
     agg_spec = {agg_name: (agg_col, "sum")}
-    grouped_df = grouped_input.groupby(list(group_by), as_index=False).agg(**agg_spec)
-    grouped_df[agg_name] = grouped_df[agg_name].map(
-        lambda v: Decimal(str(v)).quantize(Decimal("0.01"))
-    )
-    return grouped_df
+    return grouped_input.groupby(list(group_by), as_index=False).agg(**agg_spec)
 
 
 def aggregate_by(
@@ -120,10 +136,10 @@ def aggregate_by(
 
     Example:
         >>> df = aggregate_by(
-        ...     cols=(invoice.BALANCE_FIELD,),
+        ...     cols=(invoice.COST_FIELD,),
         ...     group_by=(invoice.PROJECT_ID_FIELD, invoice.CLUSTER_NAME_FIELD),
-        ...     agg_col=invoice.BALANCE_FIELD,
-        ...     agg_name="lifetime_allocation_balance",
+        ...     agg_col=invoice.COST_FIELD,
+        ...     agg_name="lifetime_allocation_cost",
         ... )
     """
     all_cols = list(cols)
@@ -140,13 +156,13 @@ def aggregate_by(
 
 
 def calculate_lifetime_costs(**filters: FilterValue) -> pd.DataFrame:
-    """Group invoice data by project and cluster, summing balance per group.
+    """Group invoice data by project and cluster, summing the COST column per group.
 
     Args:
         **filters: Column names as keys, values to filter by. Values must be str, int, or float.
 
     Returns:
-        DataFrame with columns: Project - Allocation, Cluster Name, lifetime_allocation_balance.
+        DataFrame with columns: Project - Allocation, Cluster Name, lifetime_allocation_cost.
 
     Example:
         >>> filters = {invoice.PROJECT_ID_FIELD: "vllm-test"}
@@ -156,7 +172,7 @@ def calculate_lifetime_costs(**filters: FilterValue) -> pd.DataFrame:
     return aggregate_by(
         tuple(_LIFETIME_COLS),
         (invoice.PROJECT_ID_FIELD, invoice.CLUSTER_NAME_FIELD),
-        agg_col=invoice.BALANCE_FIELD,
-        agg_name="lifetime_allocation_balance",
+        agg_col=invoice.COST_FIELD,
+        agg_name="lifetime_allocation_cost",
         **filters,
     )
