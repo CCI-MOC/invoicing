@@ -1,7 +1,4 @@
-import functools
-
 from pydantic_settings import BaseSettings
-from pyiceberg.table import StaticTable
 
 
 class DataToolsSettings(BaseSettings):
@@ -39,11 +36,3 @@ class DataToolsSettings(BaseSettings):
 
 
 data_tools_settings = DataToolsSettings()
-
-
-@functools.cache
-def get_table() -> StaticTable:
-    return StaticTable.from_metadata(
-        data_tools_settings.table_path,
-        properties=data_tools_settings.iceberg_s3_properties(),
-    )
