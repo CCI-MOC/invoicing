@@ -4,9 +4,7 @@ about: Standard Issue template
 title: ''
 labels: ''
 assignees: ''
-
 ---
-
 ## Motivation
 
 ## Completion Criteria
