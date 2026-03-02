@@ -6,6 +6,7 @@ import pandas
 from process_report.loader import loader
 from process_report.invoices import invoice
 from process_report.processors import processor
+from process_report import util
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -112,10 +113,18 @@ class ValidateBillablePIsProcessor(processor.Processor):
         nonbillable_pis: list[str],
         nonbillable_projects: pandas.DataFrame,
     ):
+        institute_list = util.load_institute_list()
+
         pi_mask = ~data[invoice.PI_FIELD].isin(nonbillable_pis)
         project_mask = find_billable_projects(data, nonbillable_projects)
+        courses_mask = ~(
+            data[invoice.IS_COURSE_FIELD]
+            & data[invoice.INSTITUTION_FIELD].isin(
+                institute_list.nonbillable_course_list
+            )
+        )
 
-        return pi_mask & project_mask
+        return pi_mask & project_mask & courses_mask
 
     def _process(self):
         self.data[invoice.IS_BILLABLE_FIELD] = self._get_billables(

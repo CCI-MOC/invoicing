@@ -1,15 +1,11 @@
 import os
 import datetime
 import yaml
-import logging
 import functools
 
 import boto3
 
 from process_report.institute_list_models import InstituteList
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
 
 
 DEFAULT_INSTITUTE_LIST = "process_report/institute_list.yaml"
@@ -37,28 +33,6 @@ def load_institute_list() -> InstituteList:
     with open(DEFAULT_INSTITUTE_LIST, "r") as f:
         institute_list = yaml.safe_load(f)
         return InstituteList.model_validate(institute_list)
-
-
-def get_institute_mapping(institute_list: InstituteList):
-    institute_map = dict()
-    for institute_info in institute_list.root:
-        for domain in institute_info.domains:
-            institute_map[domain] = institute_info.display_name
-
-    return institute_map
-
-
-def get_institution_from_pi(institute_map, pi_uname):
-    institution_domain = pi_uname.split("@")[-1]
-    for i in range(institution_domain.count(".") + 1):
-        if institution_name := institute_map.get(institution_domain, ""):
-            break
-        institution_domain = institution_domain[institution_domain.find(".") + 1 :]
-
-    if institution_name == "":
-        logger.warning(f"PI name {pi_uname} does not match any institution!")
-
-    return institution_name
 
 
 def get_iso8601_time():

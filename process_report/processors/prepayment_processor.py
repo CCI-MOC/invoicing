@@ -150,11 +150,10 @@ class PrepaymentProcessor(discount_processor.DiscountProcessor):
     def _add_prepay_info(self):
         """Populate prepaid group name, institute, and MGHPCC managed field"""
         institute_list = util.load_institute_list()
-        institute_map = util.get_institute_mapping(institute_list)
 
         for group_name, group_dict in self.group_info_dict.items():
-            group_institute = util.get_institution_from_pi(
-                institute_map, group_dict[invoice.PREPAY_GROUP_CONTACT_FIELD]
+            group_institute = institute_list.get_institution_from_pi(
+                group_dict[invoice.PREPAY_GROUP_CONTACT_FIELD]
             )
 
             # Prepay projects are identified by project name, not project - allocation name
