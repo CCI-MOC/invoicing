@@ -110,6 +110,7 @@ def merge_csv(files):
                 invoice.COST_FIELD: pandas.ArrowDtype(pyarrow.decimal128(21, 2)),
                 invoice.RATE_FIELD: str,
             },
+            quotechar="|",
         )
         dataframes.append(dataframe)
 
