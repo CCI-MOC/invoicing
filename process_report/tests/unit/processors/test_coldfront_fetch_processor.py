@@ -113,6 +113,7 @@ class TestColdfrontFetchProcessor(TestCase):
                 "Project Name": ["P3"],
                 "Cluster": [None],
                 "Is Timed": [False],
+                "Is Billable Override": [False],
             }
         )
         test_invoice = self._get_test_invoice(
@@ -189,6 +190,7 @@ class TestColdfrontFetchProcessor(TestCase):
                 "Project Name": ["P3"],
                 "Cluster": [None],
                 "Is Timed": [False],
+                "Is Billable Override": [False],
             }
         )
         test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(

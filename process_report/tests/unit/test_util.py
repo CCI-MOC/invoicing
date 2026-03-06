@@ -67,21 +67,25 @@ class TestTimedProjects(TestCase):
         self.yaml_data = [
             {
                 "name": "ProjectA",
+                "is_billable": False,
                 "clusters": [{"name": "Cluster1"}, {"name": "Cluster2"}],  # Not timed
             },
             {
                 "name": "ProjectB",
+                "is_billable": False,
                 "clusters": [
                     {"name": "Cluster1", "start": "2023-01", "end": "2023-12"}
                 ],
             },
             {
                 "name": "ProjectC",
+                "is_billable": False,
                 "start": "2023-06",
                 "end": "2023-07",
             },
             {
                 "name": "ProjectD",
+                "is_billable": False,
                 "clusters": [
                     {"name": "Cluster1", "start": "2023-05", "end": "2023-09"},
                     {"name": "Cluster2", "start": "2023-05", "end": "2023-11"},
@@ -89,6 +93,7 @@ class TestTimedProjects(TestCase):
             },
             {
                 "name": "ProjectE",
+                "is_billable": False,
             },
         ]
 
@@ -111,6 +116,30 @@ class TestTimedProjects(TestCase):
             ("ProjectD", "Cluster2"),
         ]
         assert excluded_projects == expected_projects
+
+    def test_get_nonbillable_projects_loads_yaml_into_expected_dataframe(self):
+        # This verifies the loader translates the YAML fixture into the
+        # internal dataframe shape, including the Is Billable Override column.
+        nonbillable_projects = loader.get_nonbillable_projects()
+
+        expected_projects = pandas.DataFrame(
+            [
+                ("ProjectA", "Cluster1", False, False),
+                ("ProjectA", "Cluster2", False, False),
+                ("ProjectB", "Cluster1", True, False),
+                ("ProjectD", "Cluster1", True, False),
+                ("ProjectD", "Cluster2", True, False),
+                ("ProjectE", None, False, False),
+            ],
+            columns=[
+                "Project Name",
+                "Cluster",
+                "Timed",
+                "Is Billable Override",
+            ],
+        )
+
+        pandas.testing.assert_frame_equal(nonbillable_projects, expected_projects)
 
 
 class TestValidateRequiredEnvVars(TestCase):

@@ -1,4 +1,6 @@
 - name: P9ID
+  is_billable: false
 - name: ai-telemetry-cbca60
   start: 2022-01
   end: 2026-09
+  is_billable: false
