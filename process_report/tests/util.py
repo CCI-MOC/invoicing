@@ -68,7 +68,7 @@ def new_coldfront_fetch_processor(
         data = pandas.DataFrame()
     if nonbillable_projects is None:
         nonbillable_projects = pandas.DataFrame(
-            columns=["Project Name", "Cluster", "Is Timed"]
+            columns=["Project Name", "Cluster", "Is Timed", "Is Billable Override"]
         )
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
         invoice_month, data, name, nonbillable_projects, coldfront_data_filepath
@@ -110,7 +110,7 @@ def new_validate_billable_pi_processor(
         nonbillable_pis = []
     if nonbillable_projects is None:
         nonbillable_projects = pandas.DataFrame(
-            columns=["Project Name", "Cluster", "Is Timed"]
+            columns=["Project Name", "Cluster", "Is Timed", "Is Billable Override"]
         )
 
     return validate_billable_pi_processor.ValidateBillablePIsProcessor(

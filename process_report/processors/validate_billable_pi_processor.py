@@ -78,7 +78,12 @@ def find_billable_projects(
     nonbillable_cluster_mask = ~merged_data[invoice.CLUSTER_NAME_FIELD].isin(
         NONBILLABLE_CLUSTERS
     )
-    return cluster_agnostic_mask & cluster_specific_mask & nonbillable_cluster_mask
+    billable_override_mask = (
+        merged_data[invoice.NONBILLABLE_IS_BILLABLE_OVERRIDE].fillna(False).eq(True)
+    )
+    return (
+        cluster_agnostic_mask & cluster_specific_mask & nonbillable_cluster_mask
+    ) | billable_override_mask
 
 
 @dataclass

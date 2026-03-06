@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     prepay_debits_remote_filepath: str = "Prepay/prepay_debits.csv"
 
     # Local input files
-    nonbillable_pis_filepath: str = "pi.txt"
+    nonbillable_pis_filepath: str = "pi.yaml"
     nonbillable_projects_filepath: str = "projects.yaml"
     prepay_projects_filepath: str = "prepaid_projects.csv"
     prepay_credits_filepath: str = "prepaid_credits.csv"
