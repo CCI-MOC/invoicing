@@ -120,10 +120,12 @@ class Loader:
     def get_nonbillable_projects(self) -> pandas.DataFrame:
         """
         Returns dataframe of nonbillable projects for current invoice month
-        The dataframe has 3 columns: Project Name, Cluster, Is Timed
+        The dataframe has 4 columns: Project Name, Cluster, Is Timed, Is Billable Override
         1. Project Name: Name of the nonbillable project
         2. Cluster: Name of the cluster for which the project is nonbillable, or None meaning all clusters
         3. Is Timed: Boolean indicating if the nonbillable status is time-bound
+        4. Is Billable Override: Optional boolean override from projects.yaml
+           indicating whether matching projects should be treated as billable
         """
 
         def _is_in_time_range(timed_object) -> bool:
@@ -140,6 +142,7 @@ class Loader:
         for project in projects_dict:
             project_name = project["name"]
             cluster_list = project.get("clusters")
+            is_billable = project.get("is_billable")
 
             if project.get("start"):
                 if not _is_in_time_range(project):
@@ -147,19 +150,25 @@ class Loader:
 
                 if cluster_list:
                     for cluster in cluster_list:
-                        project_list.append((project_name, cluster["name"], True))
+                        project_list.append(
+                            (project_name, cluster["name"], True, is_billable)
+                        )
                 else:
-                    project_list.append((project_name, None, True))
+                    project_list.append((project_name, None, True, is_billable))
             elif cluster_list:
                 for cluster in cluster_list:
                     cluster_start_time = cluster.get("start")
                     if cluster_start_time:
                         if _is_in_time_range(cluster):
-                            project_list.append((project_name, cluster["name"], True))
+                            project_list.append(
+                                (project_name, cluster["name"], True, is_billable)
+                            )
                     elif not cluster_start_time:
-                        project_list.append((project_name, cluster["name"], False))
+                        project_list.append(
+                            (project_name, cluster["name"], False, is_billable)
+                        )
             else:
-                project_list.append((project_name, None, False))
+                project_list.append((project_name, None, False, is_billable))
 
         return pandas.DataFrame(
             project_list,
@@ -167,6 +176,7 @@ class Loader:
                 invoice.NONBILLABLE_PROJECT_NAME,
                 invoice.NONBILLABLE_CLUSTER_NAME,
                 invoice.NONBILLABLE_IS_TIMED,
+                invoice.NONBILLABLE_IS_BILLABLE_OVERRIDE,
             ],
         )
 
