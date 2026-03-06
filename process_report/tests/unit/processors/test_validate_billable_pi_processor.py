@@ -43,6 +43,7 @@ class TestValidateBillablePIProcessor(TestCase):
                     "ocp-prod",
                 ],  # P1 is cluster-agnostic, P8-bm should be nonbillable, P9 should be billable because its on bm cluster in test invoice
                 "Is Timed": [False, False, False],
+                "Is Billable Override": [False, False, False],
             }
         )
         institutions = ["Test University"] * len(pis)
@@ -66,6 +67,34 @@ class TestValidateBillablePIProcessor(TestCase):
         validate_billable_pi_proc.process()
         output = validate_billable_pi_proc.data
         assert output[output["Is Billable"]].equals(data.iloc[[3, 4, 5, 9]])
+
+    def test_billable_override_marks_project_billable(self):
+        test_data = pandas.DataFrame(
+            {
+                "Manager (PI)": ["PI1"],
+                "Project - Allocation": ["ProjectA"],
+                "Cluster Name": ["stack"],
+                "Institution": ["Test University"],
+                "Is Course": [False],
+            }
+        )
+        nonbillable_projects = pandas.DataFrame(
+            {
+                "Project Name": ["ProjectA"],
+                "Cluster": ["stack"],
+                "Is Timed": [False],
+                "Is Billable Override": [True],
+            }
+        )
+
+        validate_billable_pi_proc = test_utils.new_validate_billable_pi_processor(
+            data=test_data,
+            nonbillable_projects=nonbillable_projects,
+        )
+        validate_billable_pi_proc.process()
+        output = validate_billable_pi_proc.data
+
+        assert output["Is Billable"].tolist() == [True]
 
     def test_empty_pi_name(self):
         test_data = pandas.DataFrame(

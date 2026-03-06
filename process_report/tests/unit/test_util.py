@@ -82,6 +82,7 @@ class TestTimedProjects(TestCase):
             },
             {
                 "name": "ProjectD",
+                "is_billable": True,
                 "clusters": [
                     {"name": "Cluster1", "start": "2023-05", "end": "2023-09"},
                     {"name": "Cluster2", "start": "2023-05", "end": "2023-11"},
@@ -111,6 +112,30 @@ class TestTimedProjects(TestCase):
             ("ProjectD", "Cluster2"),
         ]
         assert excluded_projects == expected_projects
+
+    def test_get_nonbillable_projects_loads_yaml_into_expected_dataframe(self):
+        # This verifies the loader translates the YAML fixture into the
+        # internal dataframe shape, including the Is Billable Override column.
+        nonbillable_projects = loader.get_nonbillable_projects()
+
+        expected_projects = pandas.DataFrame(
+            [
+                ("ProjectA", "Cluster1", False, False),
+                ("ProjectA", "Cluster2", False, False),
+                ("ProjectB", "Cluster1", True, False),
+                ("ProjectD", "Cluster1", True, True),
+                ("ProjectD", "Cluster2", True, True),
+                ("ProjectE", None, False, False),
+            ],
+            columns=[
+                "Project Name",
+                "Cluster",
+                "Timed",
+                "Is Billable Override",
+            ],
+        )
+
+        assert nonbillable_projects.equals(expected_projects)
 
 
 class TestValidateRequiredEnvVars(TestCase):
