@@ -41,7 +41,7 @@ The `test_data/` directory contains the minimal dataset required by the pipeline
 
 - **Invoice Files**: `test_nerc-ocp-test 2025-04.csv`, `test_NERC OpenShift 2025-04.csv`
 - **Configuration Files**:
-  - PI lists: `test_pi.txt`
+  - PI lists: `test_pi.yaml`
   - Project lists: `test_projects.txt`, `test_timed_projects.txt`
   - Prepay configurations: `test_prepay_debits.csv`, `test_prepay_credits.csv`, `test_prepay_projects.csv`, `test_prepay_contacts.csv`
 - **Historical Data**: `test_PI.csv` (old PI file), `test_alias.csv`

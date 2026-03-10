@@ -50,7 +50,12 @@ class DiscountProcessor(processor.Processor):
         def apply_discount_on_project(remaining_discount_amount, project_i, project):
             remaining_project_balance = project[pi_balance_field]
             applied_discount = min(remaining_project_balance, remaining_discount_amount)
-            invoice.at[project_i, discount_field] = applied_discount
+
+            if invoice.at[project_i, discount_field] is None:
+                invoice.at[project_i, discount_field] = applied_discount
+            else:
+                invoice.at[project_i, discount_field] += applied_discount
+
             invoice.at[project_i, pi_balance_field] -= applied_discount
             if self.IS_DISCOUNT_BY_NERC:
                 invoice.at[project_i, balance_field] -= applied_discount
