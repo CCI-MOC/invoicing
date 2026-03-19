@@ -124,7 +124,7 @@ def _prepare_pipeline_execution(
     env["PREPAY_CREDITS_FILEPATH"] = str(test_files["test_prepay_credits.csv"])
     env["PREPAY_PROJECTS_FILEPATH"] = str(test_files["test_prepay_projects.csv"])
     env["PREPAY_CONTACTS_FILEPATH"] = str(test_files["test_prepay_contacts.csv"])
-    env["nonbillable_pis_filepath"] = str(test_files["test_pi.txt"])
+    env["nonbillable_pis_filepath"] = str(test_files["test_pi.yaml"])
     env["nonbillable_projects_filepath"] = str(test_files["test_projects.yaml"])
 
     # Fallback ensures test works even when CI environment doesn't set Chrome path
@@ -216,6 +216,23 @@ def _validate_outputs(workspace: Path) -> None:
     logger.info("All pipeline outputs validated successfully")
 
 
+def _assert_non_billed_su_type_credit_applied(workspace: Path) -> None:
+    """Assert that rows credited with code 0005 are fully offset."""
+    billable_csv = workspace / "billable 2025-06.csv"
+    billable_df = pd.read_csv(billable_csv)
+
+    credit_code_mask = billable_df["Credit Code"].fillna("").str.contains("0005")
+    credited_rows = billable_df[credit_code_mask]
+
+    assert not credited_rows.empty, "Expected at least one row with credit code 0005"
+    assert (credited_rows["Credit"] == credited_rows["Cost"]).all(), (
+        "Rows with credit code 0005 must have Credit equal to Cost"
+    )
+    assert (credited_rows["Balance"] == 0).all(), (
+        "Rows with credit code 0005 must have Balance equal to 0"
+    )
+
+
 def test_e2e_pipeline_execution(
     project_root: Path, test_data_dir: Path, test_invoice_dir: Path, tmp_path: Path
 ):
@@ -241,3 +258,4 @@ def test_e2e_pipeline_execution(
     )
 
     _validate_outputs(workspace)
+    _assert_non_billed_su_type_credit_applied(workspace)

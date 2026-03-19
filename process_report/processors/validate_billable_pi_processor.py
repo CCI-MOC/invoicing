@@ -97,7 +97,9 @@ class ValidateBillablePIsProcessor(processor.Processor):
     - The project belongs in `NONBILLABLE_CLUSTERS`
     """
 
-    nonbillable_pis: list[str] = field(default_factory=loader.get_nonbillable_pis)
+    nonbillable_pis: list[str] = field(
+        default_factory=lambda: list(loader.get_nonbillable_pis()[0])
+    )
     nonbillable_projects: pandas.DataFrame = field(
         default_factory=loader.get_nonbillable_projects
     )

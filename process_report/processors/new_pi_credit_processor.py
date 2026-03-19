@@ -44,6 +44,9 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         default_factory=loader.get_limit_new_pi_credit_to_partners
     )
     upload_to_s3: bool = invoice_settings.upload_to_s3
+    nonbillable_pi_su_types: dict[str, list[str]] = field(
+        default_factory=lambda: loader.get_nonbillable_pis()[1]
+    )
 
     @staticmethod
     def _load_old_pis(old_pi_filepath) -> pandas.DataFrame:
@@ -102,10 +105,32 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     def _filter_missing_pis(self, data):
         return data[~data["Missing PI"]]
 
+    def _apply_non_billed_su_type_credits(self, data: pandas.DataFrame):
+        if not self.nonbillable_pi_su_types:
+            return
+
+        mask = data.apply(
+            lambda row: row[invoice.PI_FIELD] in self.nonbillable_pi_su_types
+            and row[invoice.SU_TYPE_FIELD]
+            in self.nonbillable_pi_su_types[row[invoice.PI_FIELD]],
+            axis=1,
+        )
+
+        if not mask.any():
+            return
+
+        data.loc[mask, invoice.CREDIT_FIELD] = data.loc[mask, invoice.COST_FIELD]
+        data.loc[mask, invoice.CREDIT_CODE_FIELD] = (
+            invoice.NON_BILLED_SU_TYPE_CREDIT_CODE
+        )
+        data.loc[mask, invoice.PI_BALANCE_FIELD] = 0
+        data.loc[mask, invoice.BALANCE_FIELD] = 0
+
     def _get_credit_eligible_projects(self, data: pandas.DataFrame):
         filtered_data = self._filter_nonbillables(data)
         filtered_data = self._filter_missing_pis(filtered_data)
         filtered_data = self._filter_excluded_su_types(filtered_data)
+        filtered_data = filtered_data[filtered_data[invoice.PI_BALANCE_FIELD] > 0]
         if self.limit_new_pi_credit_to_partners:
             filtered_data = self._filter_partners(filtered_data)
 
@@ -204,6 +229,7 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         self.data[invoice.CREDIT_CODE_FIELD] = None
         self.data[invoice.PI_BALANCE_FIELD] = self.data[invoice.COST_FIELD]
         self.data[invoice.BALANCE_FIELD] = self.data[invoice.COST_FIELD]
+        self._apply_non_billed_su_type_credits(self.data)
         self.old_pi_df = self._load_old_pis(self.old_pi_filepath)
 
     def _process(self):

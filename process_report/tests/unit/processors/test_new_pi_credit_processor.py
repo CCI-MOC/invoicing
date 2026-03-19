@@ -531,3 +531,47 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         test_invoice = test_utils.new_new_pi_credit_processor()
         with pytest.raises(SystemExit):
             test_invoice._get_pi_age(old_pi_df, "PI1", invoice_month)
+
+    def test_non_billed_su_type_credit_does_not_consume_new_pi_credit(self):
+        pi = "test_pi@harvard.edu"
+        test_old_pi_filepath = self.tempdir / "old_pi.csv"
+        pandas.DataFrame(
+            columns=[
+                "PI",
+                "First Invoice Month",
+                "Initial Credits",
+                "1st Month Used",
+                "2nd Month Used",
+            ]
+        ).to_csv(test_old_pi_filepath, index=False)
+
+        test_invoice = pandas.DataFrame(
+            {
+                "Manager (PI)": [pi, pi],
+                "Cost": [100, 200],
+                "SU Type": ["OpenStack Storage", "OpenShift CPU"],
+                "Is Billable": [True, True],
+                "Missing PI": [False, False],
+            }
+        )
+
+        new_pi_credit_proc = test_utils.new_new_pi_credit_processor(
+            invoice_month="2025-06",
+            data=test_invoice,
+            old_pi_filepath=str(test_old_pi_filepath),
+            credit_amount=150,
+            nonbillable_pi_su_types={pi: ["OpenStack Storage"]},
+        )
+
+        new_pi_credit_proc.process()
+        output = new_pi_credit_proc.data
+
+        assert output.loc[0, "Credit"] == 100
+        assert output.loc[0, "Credit Code"] == "0005"
+        assert output.loc[0, "PI Balance"] == 0
+        assert output.loc[0, "Balance"] == 0
+
+        assert output.loc[1, "Credit"] == 150
+        assert output.loc[1, "Credit Code"] == "0002"
+        assert output.loc[1, "PI Balance"] == 50
+        assert output.loc[1, "Balance"] == 50

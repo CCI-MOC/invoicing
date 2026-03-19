@@ -55,6 +55,10 @@ SUBSIDY_FIELD = "Subsidy"
 BALANCE_FIELD = "Balance"
 ###
 
+### Credit codes
+NON_BILLED_SU_TYPE_CREDIT_CODE = "0005"
+###
+
 ### Internally used field names
 IS_BILLABLE_FIELD = "Is Billable"
 MISSING_PI_FIELD = "Missing PI"

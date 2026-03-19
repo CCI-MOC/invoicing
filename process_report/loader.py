@@ -112,9 +112,28 @@ class Loader:
     def load_dataframe(self, filepath: str) -> pandas.DataFrame:
         return pandas.read_csv(filepath)
 
-    def get_nonbillable_pis(self) -> list[str]:
+    @functools.lru_cache
+    def get_nonbillable_pis(self) -> tuple[set[str], dict[str, list[str]]]:
+        fully_nonbillable_pis: set[str] = set()
+        pi_su_type_overrides: dict[str, list[str]] = {}
+
         with open(invoice_settings.nonbillable_pis_filepath) as file:
-            return [line.rstrip() for line in file]
+            pi_data = yaml.safe_load(file)
+
+        for pi_entry in pi_data:
+            username = pi_entry["username"]
+            non_billed_su_types = pi_entry.get("non_billed_su_types")
+
+            if non_billed_su_types is None:
+                fully_nonbillable_pis.add(username)
+                continue
+
+            pi_su_type_overrides[username] = [
+                su_type["name"] if isinstance(su_type, dict) else su_type
+                for su_type in non_billed_su_types
+            ]
+
+        return fully_nonbillable_pis, pi_su_type_overrides
 
     @functools.lru_cache
     def get_nonbillable_projects(self) -> pandas.DataFrame:

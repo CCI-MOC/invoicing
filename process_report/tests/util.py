@@ -107,7 +107,9 @@ def new_validate_billable_pi_processor(
     if data is None:
         data = pandas.DataFrame()
     if nonbillable_pis is None:
-        nonbillable_pis = []
+        nonbillable_pis = set()
+    elif isinstance(nonbillable_pis, list):
+        nonbillable_pis = set(nonbillable_pis)
     if nonbillable_projects is None:
         nonbillable_projects = pandas.DataFrame(
             columns=["Project Name", "Cluster", "Is Timed", "Is Billable Override"]
@@ -130,9 +132,12 @@ def new_new_pi_credit_processor(
     credit_amount=1000,
     limit_new_pi_credit_to_partners=False,
     upload_to_s3=False,
+    nonbillable_pi_su_types=None,
 ):
     if data is None:
         data = pandas.DataFrame()
+    if nonbillable_pi_su_types is None:
+        nonbillable_pi_su_types = {}
     return new_pi_credit_processor.NewPICreditProcessor(
         invoice_month,
         data,
@@ -141,6 +146,7 @@ def new_new_pi_credit_processor(
         credit_amount,
         limit_new_pi_credit_to_partners,
         upload_to_s3,
+        nonbillable_pi_su_types,
     )
 
 
