@@ -121,6 +121,9 @@ def _prepare_pipeline_execution(
             str(test_files["test_supplement_api_data.yaml"]),
         )
     )
+    # Remove Keycloak credentials from environment to avoid accidental usage during tests
+    env.pop("KEYCLOAK_CLIENT_ID", None)
+    env.pop("KEYCLOAK_CLIENT_SECRET", None)
     env["FETCH_FROM_S3"] = "false"
     env["UPLOAD_TO_S3"] = "false"
     env["invoice_path_template"] = str(test_files["test_invoice_dir"])
