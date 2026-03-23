@@ -28,7 +28,7 @@ class TestMergeCSV(TestCase):
     def setUp(self):
         self.header = ["Cost", "Name", "Rate"]
         self.data = [
-            [1, "Alice", 25],
+            [1, "Alice, Allison", 25],
             [2, "Bob", 30],
             [3, "Charlie", 28],
         ]
@@ -41,7 +41,7 @@ class TestMergeCSV(TestCase):
             )
             self.csv_files.append(csv_file)
             dataframe = pandas.DataFrame(self.data, columns=self.header)
-            dataframe.to_csv(csv_file, index=False)
+            dataframe.to_csv(csv_file, index=False, quotechar="|")
             csv_file.close()
 
     def tearDown(self):
@@ -60,6 +60,8 @@ class TestMergeCSV(TestCase):
 
         # Assert that the headers in the merged DataFrame match the expected headers
         assert merged_dataframe.columns.tolist() == self.header
+
+        assert merged_dataframe["Name"].iloc[0] == "Alice, Allison"
 
 
 class TestTimedProjects(TestCase):
