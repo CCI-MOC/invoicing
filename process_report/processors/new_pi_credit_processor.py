@@ -83,6 +83,42 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         else:
             return month_diff
 
+    @staticmethod
+    def _upsert_pi_entry(
+        old_pi_df,
+        pi_name,
+        invoice_month,
+        initial_credits,
+        first_month_used,
+        second_month_used,
+    ) -> pandas.DataFrame:
+        """
+        Upserts PI entry in old PI dataframe.
+
+        If the PI already has an entry, overwrites the entry with new values, otherwise creates a new entry.
+
+        This returns the updated old_pi_df
+        """
+        pi_entry = [
+            pi_name,
+            invoice_month,
+            initial_credits,
+            first_month_used,
+            second_month_used,
+        ]
+        if old_pi_df.loc[old_pi_df[invoice.PI_PI_FIELD] == pi_name].empty:
+            old_pi_df = pandas.concat(
+                [
+                    pandas.DataFrame([pi_entry], columns=old_pi_df.columns),
+                    old_pi_df,
+                ],
+                ignore_index=True,
+            )
+        else:
+            old_pi_df.loc[old_pi_df[invoice.PI_PI_FIELD] == pi_name] = pi_entry
+
+        return old_pi_df
+
     def _filter_partners(self, data):
         active_partnerships = list()
         institute_list = util.load_institute_list()
@@ -114,60 +150,50 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
     def _apply_credits_new_pi(
         self, data: pandas.DataFrame, old_pi_df: pandas.DataFrame
     ):
-        def get_initial_credit_amount(
-            old_pi_df, invoice_month, default_initial_credit_amount
-        ):
-            first_month_processed_pis = old_pi_df[
-                old_pi_df[invoice.PI_FIRST_MONTH] == invoice_month
-            ]
-            if first_month_processed_pis[
-                invoice.PI_INITIAL_CREDITS
-            ].empty or pandas.isna(
-                new_pi_credit_amount := first_month_processed_pis[
-                    invoice.PI_INITIAL_CREDITS
-                ].iat[0]
-            ):
-                new_pi_credit_amount = default_initial_credit_amount
-
-            return new_pi_credit_amount
-
-        new_pi_credit_amount = get_initial_credit_amount(
-            old_pi_df, self.invoice_month, self.initial_credit_amount
-        )
         logger.info(
-            f"New PI Credit set at {new_pi_credit_amount} for {self.invoice_month}"
+            f"New PI Credit set at {self.initial_credit_amount} for {self.invoice_month}"
         )
 
         credit_eligible_projects = self._get_credit_eligible_projects(data)
-        current_pi_set = set(credit_eligible_projects[invoice.PI_FIELD])
-        for pi in current_pi_set:
-            pi_projects = credit_eligible_projects[
-                credit_eligible_projects[invoice.PI_FIELD] == pi
-            ]
+        all_pi_set = set(data[~data[invoice.MISSING_PI_FIELD]][invoice.PI_FIELD])
+        eligible_pi_set = set(credit_eligible_projects[invoice.PI_FIELD])
+        for pi in all_pi_set:
             pi_age = self._get_pi_age(old_pi_df, pi, self.invoice_month)
             pi_old_pi_entry = old_pi_df.loc[
                 old_pi_df[invoice.PI_PI_FIELD] == pi
             ].squeeze()
+
+            # If the pi is not eligible, their initial credit amount is set to 0,
+            # but we still want to keep track of them in case they become eligible in the future
+            # More detail: https://github.com/CCI-MOC/invoicing/issues/280
+            if pi not in eligible_pi_set and pi_age == 0:
+                old_pi_df = self._upsert_pi_entry(
+                    old_pi_df, pi, self.invoice_month, 0, 0, 0
+                )
+                continue
+
+            pi_projects = credit_eligible_projects[
+                credit_eligible_projects[invoice.PI_FIELD] == pi
+            ]
 
             if pi_age > 1:
                 for i, row in pi_projects.iterrows():
                     data.at[i, invoice.BALANCE_FIELD] = row[invoice.COST_FIELD]
             else:
                 if pi_age == 0:
-                    if len(pi_old_pi_entry) == 0:
-                        pi_entry = [pi, self.invoice_month, new_pi_credit_amount, 0, 0]
-                        old_pi_df = pandas.concat(
-                            [
-                                pandas.DataFrame([pi_entry], columns=old_pi_df.columns),
-                                old_pi_df,
-                            ],
-                            ignore_index=True,
-                        )
-                        pi_old_pi_entry = old_pi_df.loc[
-                            old_pi_df[invoice.PI_PI_FIELD] == pi
-                        ].squeeze()
+                    old_pi_df = self._upsert_pi_entry(
+                        old_pi_df,
+                        pi,
+                        self.invoice_month,
+                        self.initial_credit_amount,
+                        0,
+                        0,
+                    )
+                    pi_old_pi_entry = old_pi_df.loc[
+                        old_pi_df[invoice.PI_PI_FIELD] == pi
+                    ].squeeze()
 
-                    remaining_credit = new_pi_credit_amount
+                    remaining_credit = self.initial_credit_amount
                     credit_used_field = invoice.PI_1ST_USED
                 elif pi_age == 1:
                     remaining_credit = (

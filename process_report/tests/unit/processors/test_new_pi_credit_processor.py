@@ -65,11 +65,15 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         test_old_pi_filepath,
         answer_invoice,
         answer_old_pi_df,
+        credit_amount=1000,
+        limit_new_pi_credit_to_partners=False,
     ):
         new_pi_credit_proc = test_utils.new_new_pi_credit_processor(
             invoice_month=invoice_month,
             data=test_invoice,
             old_pi_filepath=test_old_pi_filepath,
+            credit_amount=credit_amount,
+            limit_new_pi_credit_to_partners=limit_new_pi_credit_to_partners,
         )
         new_pi_credit_proc.process()
         output_invoice = new_pi_credit_proc.data
@@ -86,7 +90,13 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         assert output_old_pi_df.equals(answer_old_pi_df)
 
     def _get_test_invoice(
-        self, pi, costs, su_type=None, is_billable=None, missing_pi=None
+        self,
+        pi,
+        costs,
+        su_type=None,
+        is_billable=None,
+        missing_pi=None,
+        institution=None,
     ):
         if not su_type:
             su_type = ["CPU" for _ in range(len(pi))]
@@ -97,6 +107,8 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
         if not missing_pi:
             missing_pi = [False for _ in range(len(pi))]
 
+        if not institution:
+            institution = ["Foo University" for _ in range(len(pi))]
         return pandas.DataFrame(
             {
                 "Manager (PI)": pi,
@@ -104,6 +116,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 "SU Type": su_type,
                 "Is Billable": is_billable,
                 "Missing PI": missing_pi,
+                "Institution": institution,
             }
         )
 
@@ -414,7 +427,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
 
     def test_old_pi_file_overwritten(self):
         """If PI already has entry in Old PI file,
-        their initial credits and PI entry could be overwritten"""
+        their initial credits and PI entry could be overwritten if intial credit amount changes"""
 
         invoice_month = "2024-06"
         test_invoice = self._get_test_invoice(["PI", "PI"], [500, 500])
@@ -424,7 +437,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
                 "Initial Credits": [500],
-                "1st Month Used": [200],
+                "1st Month Used": [400],
                 "2nd Month Used": [0],
             }
         )
@@ -435,10 +448,10 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
                 test_invoice,
                 pandas.DataFrame(
                     {
-                        "Credit": [500, None],
+                        "Credit": [200, None],
                         "Credit Code": ["0002", None],
-                        "PI Balance": [0, 500],
-                        "Balance": [0, 500],
+                        "PI Balance": [300, 500],
+                        "Balance": [300, 500],
                     }
                 ),
             ],
@@ -449,8 +462,10 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
-                "Initial Credits": [500],
-                "1st Month Used": [500],
+                "Initial Credits": [
+                    200
+                ],  # Initial credit amount is updated to new credit amount (from 500 to 200)
+                "1st Month Used": [200],
                 "2nd Month Used": [0],
             }
         )
@@ -461,6 +476,7 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             str(test_old_pi_file),
             answer_invoice,
             answer_old_pi_df,
+            credit_amount=200,  # Test that old PI entry is overwritten with new initial credit amount
         )
 
     def test_excluded_su_types(self):
@@ -504,13 +520,122 @@ class TestNewPICreditProcessor(BaseTestCaseWithTempDir):
             axis=1,
         )
 
+        # PI2 was not eligible for credit, so should only get 0 initial credits
+        answer_old_pi_df = pandas.DataFrame(
+            {
+                "PI": ["PI", "PI2"],
+                "First Invoice Month": ["2024-06", "2024-06"],
+                "Initial Credits": [1000, 0],
+                "1st Month Used": [1000, 0],
+                "2nd Month Used": [0, 0],
+            }
+        )
+
+        self._assert_result_invoice_and_old_pi_file(
+            invoice_month,
+            test_invoice,
+            str(test_old_pi_file),
+            answer_invoice,
+            answer_old_pi_df,
+        )
+
+    def test_ineligible_pi_existing_old_pi_entry(self):
+        """If PI is eligible in first month, but ineligible in second month, do not benefit from credit during second month"""
+
+        invoice_month = "2024-07"
+        test_invoice = self._get_test_invoice(
+            ["PI"], [500], institution=["Foo"]
+        )  # Ineligible institution
+        test_old_pi_file = self.tempdir / "old_pi.csv"
+        test_old_pi_df = pandas.DataFrame(
+            {
+                "PI": ["PI"],
+                "First Invoice Month": ["2024-06"],
+                "Initial Credits": [1000],
+                "1st Month Used": [500],  # Still has 500 credits left
+                "2nd Month Used": [0],
+            }
+        )
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
+
+        answer_invoice = pandas.concat(
+            [
+                test_invoice,
+                pandas.DataFrame(
+                    {
+                        "Credit": [None],
+                        "Credit Code": [None],
+                        "PI Balance": [500],
+                        "Balance": [500],
+                    }
+                ),
+            ],
+            axis=1,
+        )
+
         answer_old_pi_df = pandas.DataFrame(
             {
                 "PI": ["PI"],
                 "First Invoice Month": ["2024-06"],
                 "Initial Credits": [1000],
-                "1st Month Used": [1000],
+                "1st Month Used": [500],
+                "2nd Month Used": [0],  # Doesn't receive credit
+            }
+        )
+
+        self._assert_result_invoice_and_old_pi_file(
+            invoice_month,
+            test_invoice,
+            str(test_old_pi_file),
+            answer_invoice,
+            answer_old_pi_df,
+            limit_new_pi_credit_to_partners=True,  # PI should be ineligible for credit if we limit to partners
+        )
+
+    def test_newly_eligible_pi_existing_old_pi_entry(self):
+        """If PI is ineligible in first month, but eligible in second month, they should still
+        not receive credit during second month since they were not eligible for credit in their first invoice month"""
+
+        invoice_month = "2024-07"
+        test_invoice = self._get_test_invoice(["PI"], [800])  # Eligible institution
+        test_old_pi_file = self.tempdir / "old_pi.csv"
+        test_old_pi_df = pandas.DataFrame(
+            {
+                "PI": ["PI"],
+                "First Invoice Month": ["2024-06"],
+                "Initial Credits": [
+                    0
+                ],  # Was ineligible in first month, so got 0 credits
+                "1st Month Used": [0],
                 "2nd Month Used": [0],
+            }
+        )
+        test_old_pi_df.to_csv(test_old_pi_file, index=False)
+
+        answer_invoice = pandas.concat(
+            [
+                test_invoice,
+                pandas.DataFrame(
+                    {
+                        "Credit": [None],
+                        "Credit Code": [None],
+                        "PI Balance": [800],
+                        "Balance": [800],
+                    }
+                ),
+            ],
+            axis=1,
+        )
+
+        answer_old_pi_df = pandas.DataFrame(
+            {
+                "PI": ["PI"],
+                "First Invoice Month": ["2024-06"],
+                "Initial Credits": [
+                    0
+                ],  # Still has 0 initial credits since they were ineligible in their first invoice month
+                "1st Month Used": [0],
+                "2nd Month Used": [0],  # Doesn't receive credit
             }
         )
 
