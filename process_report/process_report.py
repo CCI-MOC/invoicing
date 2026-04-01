@@ -21,6 +21,7 @@ from process_report.invoices import (
     ocp_test_invoice,
 )
 from process_report.processors import (
+    init_columns_processor,
     coldfront_fetch_processor,
     validate_pi_alias_processor,
     add_institution_processor,
@@ -69,6 +70,7 @@ def main():
         invoice_month,
         merged_dataframe,
         [
+            init_columns_processor.PISUCreditProcessor,
             validate_cluster_name_processor.ValidateClusterNameProcessor,
             coldfront_fetch_processor.ColdfrontFetchProcessor,
             validate_pi_alias_processor.ValidatePIAliasProcessor,
