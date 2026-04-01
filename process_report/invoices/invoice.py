@@ -28,6 +28,7 @@ PREPAY_END_DATE_FIELD = "End Date"
 NONBILLABLE_PROJECT_NAME = "Project Name"
 NONBILLABLE_CLUSTER_NAME = "Cluster"
 NONBILLABLE_IS_TIMED = "Timed"
+NONBILLABLE_IS_BILLABLE_OVERRIDE = "Is Billable Override"
 
 ### Invoice field names
 INVOICE_DATE_FIELD = "Invoice Month"
