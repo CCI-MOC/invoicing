@@ -22,9 +22,21 @@ S3_SERVICE_INVOICE_LIST = [
 ]
 
 
+SUPPLEMENTAL_START_DATE = "Start Date"
+SUPPLEMENTAL_END_DATE = "End Date"
+
+
 @functools.lru_cache
 def get_rates_info():
     return load_from_url()
+
+
+def _is_in_time_range(start, end) -> bool:
+    # Leveraging inherent lexicographical order of YYYY-MM strings
+    return (
+        start <= invoice_settings.invoice_month
+        and invoice_settings.invoice_month <= end
+    )
 
 
 class Loader:
@@ -126,13 +138,6 @@ class Loader:
         3. Is Timed: Boolean indicating if the nonbillable status is time-bound
         """
 
-        def _is_in_time_range(timed_object) -> bool:
-            # Leveraging inherent lexicographical order of YYYY-MM strings
-            return (
-                timed_object["start"] <= invoice_settings.invoice_month
-                and invoice_settings.invoice_month <= timed_object["end"]
-            )
-
         project_list = []
         with open(invoice_settings.nonbillable_projects_filepath) as file:
             projects_dict = yaml.safe_load(file)
@@ -142,7 +147,7 @@ class Loader:
             cluster_list = project.get("clusters")
 
             if project.get("start"):
-                if not _is_in_time_range(project):
+                if not _is_in_time_range(project["start"], project["end"]):
                     continue
 
                 if cluster_list:
@@ -154,7 +159,7 @@ class Loader:
                 for cluster in cluster_list:
                     cluster_start_time = cluster.get("start")
                     if cluster_start_time:
-                        if _is_in_time_range(cluster):
+                        if _is_in_time_range(cluster["start"], cluster["end"]):
                             project_list.append((project_name, cluster["name"], True))
                     elif not cluster_start_time:
                         project_list.append((project_name, cluster["name"], False))
@@ -178,6 +183,21 @@ class Loader:
                 [invoice.NONBILLABLE_PROJECT_NAME, invoice.NONBILLABLE_CLUSTER_NAME]
             ].itertuples(index=False, name=None)
         )
+
+    def get_supplement_api_data(self) -> pandas.DataFrame:
+        supplemental_df = pandas.DataFrame()
+        if invoice_settings.supplement_api_data_filepath:
+            supplemental_df = pandas.read_csv(
+                invoice_settings.supplement_api_data_filepath
+            )
+            in_time_range_mask = supplemental_df.apply(
+                lambda row: _is_in_time_range(
+                    row[SUPPLEMENTAL_START_DATE], row[SUPPLEMENTAL_END_DATE]
+                ),
+                axis=1,
+            )
+            supplemental_df = supplemental_df[in_time_range_mask]
+        return supplemental_df
 
 
 loader = Loader()

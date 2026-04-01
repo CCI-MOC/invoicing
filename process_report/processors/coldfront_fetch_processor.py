@@ -26,6 +26,11 @@ CF_ATTR_ALLOCATED_PROJECT_ID = "Allocated Project ID"
 CF_ATTR_INSTITUTION_SPECIFIC_CODE = "Institution-Specific Code"
 CF_ATTR_IS_COURSE = "Is Course?"
 
+SUPPLEMENTAL_PROJECT_ID = "Project - Allocation Name"
+SUPPLEMENTAL_PROJECT_NAME = "Project - Title"
+SUPPLEMENTAL_PI = "Manager (PI)"
+SUPPLEMENTAL_CLUSTER_NAME = "Cluster Name"
+
 
 @dataclass
 class ColdfrontFetchProcessor(processor.Processor):
@@ -33,6 +38,9 @@ class ColdfrontFetchProcessor(processor.Processor):
         default_factory=loader.get_nonbillable_projects
     )
     coldfront_data_filepath: str = invoice_settings.coldfront_api_filepath
+    supplement_api_data: pandas.DataFrame = field(
+        default_factory=lambda: loader.get_supplement_api_data()
+    )
 
     @functools.cached_property
     def coldfront_client(self):
@@ -124,6 +132,20 @@ class ColdfrontFetchProcessor(processor.Processor):
                 }
             except KeyError:
                 continue
+
+        for _, row in self.supplement_api_data.iterrows():
+            project_id = row[SUPPLEMENTAL_PROJECT_ID]
+            project_name = row[SUPPLEMENTAL_PROJECT_NAME]
+            pi_name = row[SUPPLEMENTAL_PI]
+            cluster_name = row[SUPPLEMENTAL_CLUSTER_NAME]
+
+            allocation_data[(project_id, cluster_name)] = {
+                invoice.PROJECT_FIELD: project_name,
+                invoice.PI_FIELD: pi_name,
+                invoice.INSTITUTION_ID_FIELD: "N/A",
+                invoice.CLUSTER_NAME_FIELD: cluster_name,
+                invoice.IS_COURSE_FIELD: False,  # (TODO) Quan Assuming supplemental data does not contain course info?
+            }
 
         return allocation_data
 

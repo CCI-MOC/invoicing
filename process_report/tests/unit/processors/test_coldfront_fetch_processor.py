@@ -257,3 +257,47 @@ class TestColdfrontFetchProcessor(TestCase):
         assert str(cm.value) == (
             f"Projects {expected_missing} not found in Coldfront and are billable! Please check the project names"
         )
+
+    @mock.patch(
+        "process_report.processors.coldfront_fetch_processor.ColdfrontFetchProcessor._fetch_coldfront_allocation_api",
+    )
+    def test_supplement_api_data_used_when_coldfront_missing(
+        self, mock_get_allocation_data
+    ):
+        """Supplement API rows are applied to invoice in _get_allocation_data()."""
+        mock_get_allocation_data.return_value = self._get_mock_allocation_data(
+            ["P1"],
+            ["PI1"],
+            ["IC1"],
+            ["stack"],
+        )
+
+        supplemental_df = pandas.DataFrame(
+            {
+                "Project - Allocation Name": ["P2"],
+                "Project - Title": ["P2-supplement-name"],
+                "Manager (PI)": ["PI2"],
+                "Cluster Name": ["stack"],
+            }
+        )
+
+        test_invoice = self._get_test_invoice(
+            ["P1", "P2"], cluster_name=["stack", "stack"]
+        )
+
+        expected_invoice = self._get_test_invoice(
+            ["P1", "P2"],
+            ["P1-name", "P2-supplement-name"],
+            ["PI1", "PI2"],
+            ["IC1", "N/A"],
+            ["stack", "stack"],
+            [False, False],
+        )
+
+        test_coldfront_fetch_proc = test_utils.new_coldfront_fetch_processor(
+            data=test_invoice, supplement_api_data=supplemental_df
+        )
+        test_coldfront_fetch_proc.process()
+        output_invoice = test_coldfront_fetch_proc.data
+
+        assert output_invoice.equals(expected_invoice)
