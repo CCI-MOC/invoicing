@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from decimal import Decimal
 
 from process_report.loader import loader
 from process_report.invoices import invoice
@@ -21,7 +20,6 @@ class BUSubsidyProcessor(discount_processor.DiscountProcessor):
                 return project_alloc[: project_alloc.rfind("-")]
 
         self.data[invoice.PROJECT_NAME_FIELD] = self.data.apply(get_project, axis=1)
-        self.data[invoice.SUBSIDY_FIELD] = Decimal(0)
 
     def _process(self):
         self.data = self._apply_subsidy(self.data, self.subsidy_amount)

@@ -176,10 +176,7 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
                 credit_eligible_projects[invoice.PI_FIELD] == pi
             ]
 
-            if pi_age > 1:
-                for i, row in pi_projects.iterrows():
-                    data.at[i, invoice.BALANCE_FIELD] = row[invoice.COST_FIELD]
-            else:
+            if pi_age <= 1:
                 if pi_age == 0:
                     old_pi_df = self._upsert_pi_entry(
                         old_pi_df,
@@ -226,10 +223,6 @@ class NewPICreditProcessor(discount_processor.DiscountProcessor):
         return (data, old_pi_df)
 
     def _prepare(self):
-        self.data[invoice.CREDIT_FIELD] = None
-        self.data[invoice.CREDIT_CODE_FIELD] = None
-        self.data[invoice.PI_BALANCE_FIELD] = self.data[invoice.COST_FIELD]
-        self.data[invoice.BALANCE_FIELD] = self.data[invoice.COST_FIELD]
         self.old_pi_df = self._load_old_pis(self.old_pi_filepath)
 
     def _process(self):

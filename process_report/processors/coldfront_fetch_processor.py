@@ -143,7 +143,6 @@ class ColdfrontFetchProcessor(processor.Processor):
             )
 
     def _apply_allocation_data(self, allocation_data):
-        self.data[invoice.IS_COURSE_FIELD] = False
         for project_cluster_tuple, data in allocation_data.items():
             project_id, cluster_name = project_cluster_tuple
             mask = (self.data[invoice.PROJECT_ID_FIELD] == project_id) & (
