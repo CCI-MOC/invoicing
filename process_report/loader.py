@@ -9,6 +9,7 @@ from nerc_rates import load_from_url
 from process_report import util
 from process_report.settings import invoice_settings
 from process_report.invoices import invoice
+from process_report.models.nonbillable_models import ExcludedProjectList, PIList
 
 # List of service invoices processed by pipeline. Change if new services are added.
 # Cannot simply filter by suffix because S3 can't do it
@@ -113,27 +114,18 @@ class Loader:
         return pandas.read_csv(filepath)
 
     @functools.lru_cache
-    def _load_pi_config(self, filepath: str) -> list[dict]:
-        with open(filepath) as file:
+    def _load_pi_config(self) -> PIList:
+        with open(invoice_settings.nonbillable_pis_filepath) as file:
             pi_list = yaml.safe_load(file)
 
-        if not isinstance(pi_list, list):
-            raise ValueError("pi.yaml must contain a YAML list")
-
-        return pi_list
+        return PIList.model_validate(pi_list)
 
     def get_nonbillable_pis(self) -> list[str]:
-        pi_list = self._load_pi_config(invoice_settings.nonbillable_pis_filepath)
-        return [pi["username"] for pi in pi_list if "non_billed_su_types" not in pi]
+        return self._load_pi_config().get_nonbillable_pis()
 
     def get_pi_non_billed_su_types(self) -> dict[str, list[str]]:
         """PI usernames -> list of SU types that receive credit (zeroed out)."""
-        pi_list = self._load_pi_config(invoice_settings.nonbillable_pis_filepath)
-        return {
-            pi["username"]: [su["name"] for su in pi["non_billed_su_types"]]
-            for pi in pi_list
-            if "non_billed_su_types" in pi
-        }
+        return self._load_pi_config().get_pi_non_billed_su_types()
 
     @functools.lru_cache
     def get_nonbillable_projects(self) -> pandas.DataFrame:
@@ -147,48 +139,10 @@ class Loader:
            indicating whether matching projects should be treated as billable
         """
 
-        def _is_in_time_range(timed_object) -> bool:
-            # Leveraging inherent lexicographical order of YYYY-MM strings
-            return (
-                timed_object["start"] <= invoice_settings.invoice_month
-                and invoice_settings.invoice_month <= timed_object["end"]
-            )
-
-        project_list = []
         with open(invoice_settings.nonbillable_projects_filepath) as file:
-            projects_dict = yaml.safe_load(file)
-
-        for project in projects_dict:
-            project_name = project["name"]
-            cluster_list = project.get("clusters")
-            is_billable = project.get("is_billable", False)
-
-            if project.get("start"):
-                if not _is_in_time_range(project):
-                    continue
-
-                if cluster_list:
-                    for cluster in cluster_list:
-                        project_list.append(
-                            (project_name, cluster["name"], True, is_billable)
-                        )
-                else:
-                    project_list.append((project_name, None, True, is_billable))
-            elif cluster_list:
-                for cluster in cluster_list:
-                    cluster_start_time = cluster.get("start")
-                    if cluster_start_time:
-                        if _is_in_time_range(cluster):
-                            project_list.append(
-                                (project_name, cluster["name"], True, is_billable)
-                            )
-                    elif not cluster_start_time:
-                        project_list.append(
-                            (project_name, cluster["name"], False, is_billable)
-                        )
-            else:
-                project_list.append((project_name, None, False, is_billable))
-
+            data = yaml.safe_load(file)
+        projects = ExcludedProjectList.model_validate(data)
+        project_list = projects.get_nonbillable_projects(invoice_settings.invoice_month)
         return pandas.DataFrame(
             project_list,
             columns=[
