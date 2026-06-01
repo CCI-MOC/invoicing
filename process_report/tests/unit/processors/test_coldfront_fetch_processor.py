@@ -1,7 +1,7 @@
 from unittest import TestCase, mock
 import pandas
 import pytest
-
+import json
 from process_report.tests import util as test_utils
 
 
@@ -259,3 +259,31 @@ class TestColdfrontFetchProcessor(TestCase):
         assert str(cm.value) == (
             f"Projects {expected_missing} not found in Coldfront and are billable! Please check the project names"
         )
+
+    def test_get_coldfront_api_data_with_filepath(self):
+        mock_api_data = [{"project": "test"}]
+        with mock.patch(
+            "builtins.open", mock.mock_open(read_data=json.dumps(mock_api_data))
+        ):
+            proc = test_utils.new_coldfront_fetch_processor(
+                coldfront_data_filepath="fake/path.json"
+            )
+            result = proc._get_coldfront_api_data()
+            assert result == mock_api_data
+
+    @mock.patch(
+        "process_report.processors.coldfront_fetch_processor.ColdfrontFetchProcessor._fetch_coldfront_allocation_api",
+    )
+    def test_get_allocation_data_missing_key(self, mock_get_allocation_data):
+        """Malformed allocation entries with missing keys are skipped."""
+        mock_get_allocation_data.return_value = [
+            {
+                "resource": {"name": "stack"},
+                "project": {"pi": "PI1"},
+                "attributes": {},
+            },  # missing Allocated Project ID
+        ]
+        test_invoice = self._get_test_invoice(["P1"], cluster_name=["stack"])
+        proc = test_utils.new_coldfront_fetch_processor(data=test_invoice)
+        result = proc._get_allocation_data(mock_get_allocation_data.return_value)
+        assert result == {}  # malformed entry was skipped
