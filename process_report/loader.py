@@ -62,6 +62,12 @@ class Loader:
         return remote_filepath
 
     @functools.lru_cache
+    def get_iceberg_config(self) -> dict:
+        """Load an Iceberg catalog config from a YAML file."""
+        with open(invoice_settings.iceberg_config_path, "r") as f:
+            return yaml.safe_load(f)
+
+    @functools.lru_cache
     def get_new_pi_credit_amount(self) -> Decimal:
         return invoice_settings.new_pi_credit_amount or get_rates_info().get_value_at(
             "New PI Credit", invoice_settings.invoice_month, Decimal
@@ -111,6 +117,13 @@ class Loader:
     @functools.lru_cache
     def load_dataframe(self, filepath: str) -> pandas.DataFrame:
         return pandas.read_csv(filepath)
+
+    @functools.lru_cache
+    def load_prepay_credits(self) -> pandas.DataFrame:
+        prepay_df = self.load_dataframe(invoice_settings.prepay_credits_filepath)
+        return prepay_df.astype(
+            {invoice.PREPAY_CREDIT_FIELD: invoice.BALANCE_FIELD_TYPE}
+        )
 
     @functools.lru_cache
     def _load_pi_config(self, filepath: str) -> list[dict]:
