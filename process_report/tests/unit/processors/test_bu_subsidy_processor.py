@@ -32,6 +32,7 @@ class TestBUSubsidyProcessor(TestCase):
         institution=None,
         is_billable=None,
         missing_pi=None,
+        clusters=None,
     ):
         if not balances:
             balances = pi_balances
@@ -48,6 +49,9 @@ class TestBUSubsidyProcessor(TestCase):
         if not missing_pi:
             missing_pi = [False for _ in range(len(pi))]
 
+        if not clusters:
+            clusters = ["" for _ in range(len(pi))]
+
         return pandas.DataFrame(
             {
                 "Manager (PI)": pi,
@@ -57,6 +61,7 @@ class TestBUSubsidyProcessor(TestCase):
                 "Institution": institution,
                 "Is Billable": is_billable,
                 "Missing PI": missing_pi,
+                "Cluster Name": clusters,
             }
         )
 
@@ -173,5 +178,23 @@ class TestBUSubsidyProcessor(TestCase):
         answer_invoice["Project"] = answer_invoice["Project - Allocation"]
         answer_invoice["Subsidy"] = [80, 20, 40, 40]
         answer_invoice["PI Balance"] = [0, 60, 0, 0]
+
+        self._assert_result_invoice(subsidy_amount, test_invoice, answer_invoice)
+
+    def test_exclude_bm_cluster(self):
+        """Projects in the 'bm' cluster should be excluded from BU subsidy calculation."""
+        subsidy_amount = 100
+        test_invoice = self._get_test_invoice(
+            ["PI"] * 2,  # single PI (will be broadcast to two rows by lengths below)
+            pi_balances=[60, 60],
+            project_names=["P1", "P2"],
+            clusters=["bm", "ocp"],
+        )
+
+        answer_invoice = test_invoice.copy()
+        answer_invoice["Project"] = answer_invoice["Project - Allocation"]
+        # bm allocation gets no subsidy, non-bm allocation gets up to its PI balance (60)
+        answer_invoice["Subsidy"] = [0, 60]
+        answer_invoice["PI Balance"] = [60, 0]
 
         self._assert_result_invoice(subsidy_amount, test_invoice, answer_invoice)

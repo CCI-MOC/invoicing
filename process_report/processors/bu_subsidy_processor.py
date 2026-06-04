@@ -33,7 +33,10 @@ class BUSubsidyProcessor(discount_processor.DiscountProcessor):
         ]
         filtered_data = filtered_data[
             filtered_data[invoice.INSTITUTION_FIELD] == "Boston University"
-        ].copy()
+        ]
+        filtered_data = filtered_data[
+            ~(filtered_data[invoice.CLUSTER_NAME_FIELD] == "bm")
+        ]
 
         return filtered_data
 
