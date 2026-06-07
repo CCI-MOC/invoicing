@@ -36,9 +36,8 @@ class TestCreditsSnapshot(TestCase):
             prepay_credits=test_prepay_credits,
             prepay_contacts=test_prepay_contacts,
         )
-        output_snapshot = new_prepayment_proc._get_prepay_credits_snapshot()
-
-        assert answer_credits_snapshot.equals(output_snapshot)
+        new_prepayment_proc._prepare()
+        assert answer_credits_snapshot.equals(new_prepayment_proc.export_data)
 
     def test_output_path(self):
         inv = test_utils.new_prepay_credits_snapshot(invoice_month="2025-01")
@@ -60,22 +59,3 @@ class TestCreditsSnapshot(TestCase):
             inv.output_s3_archive_key
             == "Invoices/2025-01/Archive/NERC_Prepaid_Group-Credits-2025-01 2025-01-01T00:00:00.csv"
         )
-
-    def test_prepare(self):
-        test_prepay_credits = pandas.DataFrame(
-            {"Month": ["2025-01"], "Group Name": ["G1"], "Credit": [100]}
-        )
-        test_prepay_contacts = pandas.DataFrame(
-            {
-                "Group Name": ["G1"],
-                "Group Contact Email": [""],
-                "MGHPCC Managed": ["Yes"],
-            }
-        )
-        inv = test_utils.new_prepay_credits_snapshot(
-            invoice_month="2025-01",
-            prepay_credits=test_prepay_credits,
-            prepay_contacts=test_prepay_contacts,
-        )
-        inv._prepare()
-        assert len(inv.export_data) == 1
