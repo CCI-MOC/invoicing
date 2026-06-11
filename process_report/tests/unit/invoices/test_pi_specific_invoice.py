@@ -187,3 +187,65 @@ class TestPISpecificInvoice(TestCase):
             ):
                 pi_inv.process()
                 pi_inv.export()
+
+    @mock.patch("process_report.invoices.invoice.Invoice._filter_columns")
+    @mock.patch("os.path.exists")
+    @mock.patch("subprocess.run")
+    def test_export_missing_pi(
+        self, mock_subprocess_run, mock_path_exists, mock_filter_cols
+    ):
+        invoice_month = "2025-01"
+        test_invoice = self._get_test_invoice(
+            pi=[None, "PI1"],
+            institution=["", "BU"],
+            balance=[0, 100],
+        )
+        mock_path_exists.return_value = True
+        mock_filter_cols.return_value = test_invoice
+        with tempfile.TemporaryDirectory() as test_dir:
+            pi_inv = test_utils.new_pi_specific_invoice(
+                test_dir, invoice_month, data=test_invoice
+            )
+            pi_inv.process()
+            pi_inv.export()
+            assert mock_subprocess_run.call_count == 1
+
+    @mock.patch("process_report.invoices.invoice.Invoice._filter_columns")
+    @mock.patch("os.path.exists")
+    @mock.patch("subprocess.run")
+    def test_export_no_chrome(
+        self, mock_subprocess_run, mock_path_exists, mock_filter_cols
+    ):
+        invoice_month = "2025-01"
+        test_invoice = self._get_test_invoice(
+            pi=[None, "PI1"],
+            institution=["", "BU"],
+            balance=[0, 100],
+        )
+        mock_path_exists.return_value = False
+        mock_filter_cols.return_value = test_invoice
+        with tempfile.TemporaryDirectory() as test_dir:
+            pi_inv = test_utils.new_pi_specific_invoice(
+                test_dir, invoice_month, data=test_invoice
+            )
+            pi_inv.process()
+            with self.assertRaises(SystemExit):
+                pi_inv.export()
+
+    @mock.patch("process_report.util.get_iso8601_time")
+    @mock.patch("os.listdir")
+    def test_export_s3(self, mock_listdir, mock_get_time):
+        mock_get_time.return_value = "2025-01-01"
+        mock_listdir.return_value = ["BU_PI1_2025-01.pdf"]
+        s3_bucket = mock.MagicMock()
+        invoice_month = "2025-01"
+        test_invoice = self._get_test_invoice(
+            pi=["PI1"],
+            institution=["BU"],
+            balance=[100],
+        )
+        pi_inv = test_utils.new_pi_specific_invoice(
+            "test_dir", invoice_month, data=test_invoice
+        )
+        pi_inv.export_s3(s3_bucket)
+        assert s3_bucket.upload_file.call_count == 2
