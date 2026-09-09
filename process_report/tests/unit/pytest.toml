@@ -1,0 +1,2 @@
+[pytest_env]
+COLDFRONT_API_FILEPATH = "/foo/coldfront_api.json"
