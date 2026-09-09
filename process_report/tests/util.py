@@ -17,6 +17,7 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
     validate_cluster_name_processor,
+    add_institution_processor,
 )
 
 
@@ -208,11 +209,23 @@ def new_validate_cluster_name_processor(
     )
 
 
+def new_add_institution_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return add_institution_processor.AddInstitutionProcessor(invoice_month, data, name)
+
+
 def new_moca_prepaid_invoice(
     name="",
     invoice_month="0000-00",
     data=None,
 ):
+    if data is None:
+        data = pandas.DataFrame()
     return MOCA_prepaid_invoice.MOCAPrepaidInvoice(
         invoice_month,
         data,
