@@ -10,21 +10,8 @@ def _invoice_dtypes():
 
     return {
         col.name: col.dtype
-        for col in [
-            invoice.INVOICE_DATE_COLUMN,
-            invoice.PROJECT_COLUMN,
-            invoice.PROJECT_ID_COLUMN,
-            invoice.PI_COLUMN,
-            invoice.CLUSTER_NAME_COLUMN,
-            invoice.INVOICE_EMAIL_COLUMN,
-            invoice.INVOICE_ADDRESS_COLUMN,
-            invoice.INSTITUTION_COLUMN,
-            invoice.INSTITUTION_ID_COLUMN,
-            invoice.SU_HOURS_COLUMN,
-            invoice.SU_TYPE_COLUMN,
-            invoice.RATE_COLUMN,
-            invoice.COST_COLUMN,
-        ]
+        for col in vars(invoice).values()
+        if isinstance(col, invoice.InvoiceColumn)
     }
 
 
