@@ -117,6 +117,9 @@ def _prepare_pipeline_execution(
     env["FETCH_FROM_S3"] = "false"
     env["UPLOAD_TO_S3"] = "false"
     env["invoice_path_template"] = str(test_files["test_invoice_dir"])
+    # A subdirectory is needed because _validate_outputs scans the workspace
+    # root for CSVs and fails on any unexpected file, so copies placed in the
+    # root would be flagged as unexpected output.
     input_dir = workspace / "input_data"
     input_dir.mkdir(exist_ok=True)
     pi_file_copy = input_dir / "test_PI.csv"
