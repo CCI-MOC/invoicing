@@ -1,4 +1,5 @@
 import os
+import shutil
 from pathlib import Path
 import pandas as pd
 import pytest
@@ -116,11 +117,18 @@ def _prepare_pipeline_execution(
     env["FETCH_FROM_S3"] = "false"
     env["UPLOAD_TO_S3"] = "false"
     env["invoice_path_template"] = str(test_files["test_invoice_dir"])
-
-    env["PI_REMOTE_FILEPATH"] = str(test_files["test_PI.csv"])
+    # A subdirectory is needed because _validate_outputs scans the workspace
+    # root for CSVs and fails on any unexpected file, so copies placed in the
+    # root would be flagged as unexpected output.
+    input_dir = workspace / "input_data"
+    input_dir.mkdir(exist_ok=True)
+    pi_file_copy = input_dir / "test_PI.csv"
+    shutil.copy(test_files["test_PI.csv"], pi_file_copy)
+    env["PI_REMOTE_FILEPATH"] = str(pi_file_copy)
     env["ALIAS_REMOTE_FILEPATH"] = str(test_files["test_alias.csv"])
-    env["PREPAY_DEBITS_REMOTE_FILEPATH"] = str(test_files["test_prepay_debits.csv"])
-
+    prepay_debits_copy = input_dir / "test_prepay_debits.csv"
+    shutil.copy(test_files["test_prepay_debits.csv"], prepay_debits_copy)
+    env["PREPAY_DEBITS_REMOTE_FILEPATH"] = str(prepay_debits_copy)
     env["PREPAY_CREDITS_FILEPATH"] = str(test_files["test_prepay_credits.csv"])
     env["PREPAY_PROJECTS_FILEPATH"] = str(test_files["test_prepay_projects.csv"])
     env["PREPAY_CONTACTS_FILEPATH"] = str(test_files["test_prepay_contacts.csv"])
