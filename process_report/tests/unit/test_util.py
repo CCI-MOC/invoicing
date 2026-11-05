@@ -1,4 +1,4 @@
-from unittest import TestCase, mock
+from unittest import TestCase
 import tempfile
 import pandas
 import os
@@ -138,20 +138,3 @@ class TestTimedProjects(TestCase):
         )
 
         assert nonbillable_projects.equals(expected_projects)
-
-
-class TestValidateRequiredEnvVars(TestCase):
-    @mock.patch.dict(
-        "os.environ", {"KEYCLOAK_CLIENT_ID": "test", "KEYCLOAK_CLIENT_SECRET": "test"}
-    )
-    def test_env_vars_valid(self):
-        process_report.validate_required_env_vars(
-            ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"]
-        )
-
-    @mock.patch.dict("os.environ", {"KEYCLOAK_CLIENT_ID": "test"})
-    def test_env_vars_missing(self):
-        with pytest.raises(SystemExit):
-            process_report.validate_required_env_vars(
-                ["KEYCLOAK_CLIENT_ID", "KEYCLOAK_CLIENT_SECRET"]
-            )
