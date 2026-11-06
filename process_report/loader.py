@@ -54,6 +54,12 @@ class Loader:
         return remote_filepath
 
     @functools.lru_cache
+    def get_iceberg_config(self) -> dict:
+        """Load an Iceberg catalog config from a YAML file."""
+        with open(invoice_settings.iceberg_config_path, "r") as f:
+            return yaml.safe_load(f)
+
+    @functools.lru_cache
     def get_new_pi_credit_amount(self) -> Decimal:
         if invoice_settings.new_pi_credit_amount is not None:
             return invoice_settings.new_pi_credit_amount
