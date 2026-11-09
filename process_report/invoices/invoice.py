@@ -4,7 +4,7 @@ from decimal import Decimal
 import pandas
 import pyarrow
 import logging
-from process_report import invoice_csv
+from process_report import invoice_csv_io
 
 import process_report.util as util
 
@@ -226,7 +226,7 @@ class Invoice:
 
     def export(self):
         self._filter_columns()
-        invoice_csv.write_invoice_csv(self.export_data, self.output_path)
+        invoice_csv_io.write_invoice_csv(self.export_data, self.output_path)
 
     def export_s3(self, s3_bucket):
         s3_bucket.upload_file(self.output_path, self.output_s3_key)

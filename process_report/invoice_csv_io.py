@@ -1,13 +1,13 @@
 import csv
 import pandas
+from process_report.invoices import invoice
+
 
 QUOTECHAR = "|"
 QUOTING = csv.QUOTE_MINIMAL
 
 
 def _invoice_dtypes():
-    from process_report.invoices import invoice
-
     return {
         col.name: col.dtype
         for col in vars(invoice).values()
