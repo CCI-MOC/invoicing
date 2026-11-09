@@ -10,17 +10,6 @@ from process_report import util
 from process_report.settings import invoice_settings
 from process_report.invoices import invoice
 
-# List of service invoices processed by pipeline. Change if new services are added.
-# Cannot simply filter by suffix because S3 can't do it
-S3_SERVICE_INVOICE_LIST = [
-    "ocp-test {invoice_month}.csv",
-    "ocp-prod {invoice_month}.csv",
-    "academic {invoice_month}.csv",
-    "barcelona {invoice_month}.csv",
-    "NERC OpenStack {invoice_month}.csv",
-    "NERC Storage {invoice_month}.csv",
-]
-
 
 @functools.lru_cache
 def get_rates_info():
@@ -34,14 +23,17 @@ class Loader:
         csv_invoice_filepath_list = []
         if invoice_settings.fetch_from_s3:
             s3_bucket = util.get_invoice_bucket()
+            invoice_dir_path = invoice_settings.invoice_path_template.format(
+                invoice_month=invoice_settings.invoice_month
+            )
+            invoice_month_suffix = f"{invoice_settings.invoice_month}.csv"
 
-            for invoice_name_template in S3_SERVICE_INVOICE_LIST:
-                local_name = invoice_name_template.format(
-                    invoice_month=invoice_settings.invoice_month
-                )
-                s3_name = (invoice_settings.invoice_path_template + local_name).format(
-                    invoice_month=invoice_settings.invoice_month
-                )
+            for s3_object in s3_bucket.objects.filter(Prefix=invoice_dir_path):
+                s3_name = s3_object.key
+                local_name = os.path.basename(s3_name)
+                if not local_name.endswith(invoice_month_suffix):
+                    continue
+
                 csv_invoice_filepath_list.append(local_name)
                 s3_bucket.download_file(s3_name, local_name)
         else:
@@ -63,30 +55,33 @@ class Loader:
 
     @functools.lru_cache
     def get_new_pi_credit_amount(self) -> Decimal:
-        return invoice_settings.new_pi_credit_amount or get_rates_info().get_value_at(
+        if invoice_settings.new_pi_credit_amount is not None:
+            return invoice_settings.new_pi_credit_amount
+        return get_rates_info().get_value_at(
             "New PI Credit", invoice_settings.invoice_month, Decimal
         )
 
     @functools.lru_cache
     def get_limit_new_pi_credit_to_partners(self) -> bool:
-        return (
-            invoice_settings.limit_new_pi_credit_to_partners
-            or get_rates_info().get_value_at(
-                "Limit New PI Credit to MGHPCC Partners",
-                invoice_settings.invoice_month,
-                bool,
-            )
+        if invoice_settings.limit_new_pi_credit_to_partners is not None:
+            return invoice_settings.limit_new_pi_credit_to_partners
+        return get_rates_info().get_value_at(
+            "Limit New PI Credit to MGHPCC Partners",
+            invoice_settings.invoice_month,
+            bool,
         )
 
     @functools.lru_cache
     def get_bu_subsidy_amount(self) -> Decimal:
-        return invoice_settings.bu_subsidy_amount or get_rates_info().get_value_at(
+        if invoice_settings.bu_subsidy_amount is not None:
+            return invoice_settings.bu_subsidy_amount
+        return get_rates_info().get_value_at(
             "BU Subsidy", invoice_settings.invoice_month, Decimal
         )
 
     @functools.lru_cache
     def get_lenovo_su_charge_info(self) -> dict[str, Decimal]:
-        if invoice_settings.lenovo_charge_info:
+        if invoice_settings.lenovo_charge_info is not None:
             return invoice_settings.lenovo_charge_info
 
         lenovo_charge_info = {}

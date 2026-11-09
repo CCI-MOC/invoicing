@@ -17,6 +17,7 @@ from process_report.processors import (
     bu_subsidy_processor,
     prepayment_processor,
     validate_cluster_name_processor,
+    add_institution_processor,
 )
 
 
@@ -63,7 +64,7 @@ def new_coldfront_fetch_processor(
     invoice_month="0000-00",
     data=None,
     nonbillable_projects=None,
-    coldfront_data_filepath=None,
+    coldfront_data_filepaths=(),
 ):
     if data is None:
         data = pandas.DataFrame()
@@ -72,7 +73,11 @@ def new_coldfront_fetch_processor(
             columns=["Project Name", "Cluster", "Is Timed", "Is Billable Override"]
         )
     return coldfront_fetch_processor.ColdfrontFetchProcessor(
-        invoice_month, data, name, nonbillable_projects, coldfront_data_filepath
+        invoice_month,
+        data,
+        name,
+        nonbillable_projects,
+        coldfront_data_filepaths,
     )
 
 
@@ -208,11 +213,23 @@ def new_validate_cluster_name_processor(
     )
 
 
+def new_add_institution_processor(
+    name="",
+    invoice_month="0000-00",
+    data=None,
+):
+    if data is None:
+        data = pandas.DataFrame()
+    return add_institution_processor.AddInstitutionProcessor(invoice_month, data, name)
+
+
 def new_moca_prepaid_invoice(
     name="",
     invoice_month="0000-00",
     data=None,
 ):
+    if data is None:
+        data = pandas.DataFrame()
     return MOCA_prepaid_invoice.MOCAPrepaidInvoice(
         invoice_month,
         data,
