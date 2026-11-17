@@ -33,6 +33,8 @@ export S3_BUCKET_NAME=${S3_BUCKET_NAME:-'nerc-invoicing'}
 
 export CHROME_BIN_PATH='/usr/bin/chromium'
 
+export COLDFRONT_API_FILEPATHS='["./non-billable-projects/project_api_data.yaml"]'
+
 export NONBILLABLE_PIS_FILEPATH='./non-billable-projects/pi.yaml'
 export NONBILLABLE_PROJECTS_FILEPATH='./non-billable-projects/projects.yaml'
 export PREPAY_PROJECTS_FILEPATH='./non-billable-projects/prepaid_projects.yaml'
